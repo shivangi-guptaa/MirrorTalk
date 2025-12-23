@@ -1,0 +1,84 @@
+table 1
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+Why this is correct
+
+password_hash → never store raw passwords
+
+email UNIQUE → prevents duplicate accounts
+
+updated_at → professional auditing
+
+Clean auth isolation
+
+📌 Interview line:
+
+“Authentication data is isolated in the users table for security and scalability.”
+
+table 2:
+CREATE TABLE journals (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    entry_text TEXT NOT NULL,
+    entry_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_journal_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    INDEX idx_user_date (user_id, entry_date)
+);
+Why this is expert-level
+user_id + entry_date indexed → fast lookups
+
+One user → many journals
+
+ON DELETE CASCADE → clean data removal
+
+📌 Interview line:
+
+“Journals are user-scoped and indexed by date for efficient retrieval.”
+
+table 3:
+CREATE TABLE moods (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    mood_level TINYINT NOT NULL CHECK (mood_level BETWEEN 1 AND 5),
+    mood_date DATE NOT NULL,
+
+    CONSTRAINT fk_mood_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    UNIQUE KEY unique_user_day (user_id, mood_date)
+);
+Why this design is strong
+
+TINYINT → efficient storage
+
+UNIQUE (user_id, mood_date) → one mood per day
+
+Prevents dirty data
+
+📌 Interview line:
+
+“I enforced a unique constraint to prevent multiple mood entries per day per user.”
+
+🧩 RELATIONSHIP SUMMARY (Interview-Ready)
+users (1) ──────< journals (many)
+users (1) ──────< moods (many)
+
+
+Say this confidently:
+
+“The schema follows a one-to-many relationship with strict foreign key enforcement.”
