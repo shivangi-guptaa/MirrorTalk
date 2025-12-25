@@ -18,3 +18,11 @@ app.listen(PORT, () =>
 const authRoutes = require("./routes/authRoutes");
 
 app.use("/api/auth", authRoutes);
+
+const journalRoutes = require("./routes/journalRoutes");
+
+app.use("/api/journals", journalRoutes);
+
+const moodRoutes = require("./routes/moodRoutes");
+
+app.use("/api/moods", moodRoutes);

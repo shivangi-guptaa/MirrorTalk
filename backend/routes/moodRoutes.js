@@ -1,0 +1,86 @@
+const express = require("express");
+const db = require("../config/db");
+const authMiddleware = require("../middleware/authMiddleware");
+
+const router = express.Router();
+
+/* ======================
+   ADD / UPDATE DAILY MOOD
+====================== */
+router.post("/", authMiddleware, async (req, res) => {
+  const { mood_level, mood_date } = req.body;
+  const userId = req.user.id;
+
+  if (!mood_level || mood_level < 1 || mood_level > 5 || !mood_date) {
+    return res.status(400).json({ message: "Invalid mood data" });
+  }
+
+  try {
+    // Try insert
+    await db.promise().query(
+      "INSERT INTO moods (user_id, mood_level, mood_date) VALUES (?, ?, ?)",
+      [userId, mood_level, mood_date]
+    );
+
+    res.status(201).json({ message: "Mood added successfully" });
+  } catch (err) {
+    // Duplicate mood for same day → update instead
+    if (err.code === "ER_DUP_ENTRY") {
+      await db.promise().query(
+        "UPDATE moods SET mood_level = ? WHERE user_id = ? AND mood_date = ?",
+        [mood_level, userId, mood_date]
+      );
+
+      return res.json({ message: "Mood updated for the day" });
+    }
+
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ======================
+   GET MOOD HISTORY
+====================== */
+router.get("/", authMiddleware, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const [moods] = await db.promise().query(
+      "SELECT mood_level, mood_date FROM moods WHERE user_id = ? ORDER BY mood_date DESC",
+      [userId]
+    );
+
+    res.json(moods);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ======================
+   WEEKLY MOOD SUMMARY
+====================== */
+router.get("/weekly-summary", authMiddleware, async (req, res) => {
+  const userId = req.user.id;
+
+  try {
+    const [summary] = await db.promise().query(
+      `
+      SELECT 
+        ROUND(AVG(mood_level), 2) AS avg_mood,
+        MAX(mood_level) AS best_mood,
+        MIN(mood_level) AS worst_mood,
+        COUNT(*) AS total_days
+      FROM moods
+      WHERE user_id = ?
+        AND mood_date >= CURDATE() - INTERVAL 7 DAY
+      `,
+      [userId]
+    );
+
+    res.json(summary[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
