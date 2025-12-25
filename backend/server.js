@@ -26,3 +26,16 @@ app.use("/api/journals", journalRoutes);
 const moodRoutes = require("./routes/moodRoutes");
 
 app.use("/api/moods", moodRoutes);
+
+const errorHandler = require("./middleware/errorMiddleware");
+
+// after all routes
+app.use(errorHandler);
+
+app.get("/api/health", (req, res) => {
+  res.json({
+    success: true,
+    message: "MirrorTalk backend is running"
+  });
+});
+

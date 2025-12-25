@@ -10,10 +10,13 @@ const router = express.Router();
 router.post("/", authMiddleware, async (req, res) => {
   const { entry_text, entry_date } = req.body;
   const userId = req.user.id;
-
-  if (!entry_text || !entry_date) {
-    return res.status(400).json({ message: "All fields required" });
-  }
+  
+if (!entry_text || !entry_date) {
+  return res.status(400).json({
+    success: false,
+    message: "Journal text and date required"
+  });
+}
 
   try {
     await db.promise().query(

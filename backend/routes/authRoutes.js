@@ -11,9 +11,13 @@ const router = express.Router();
 router.post("/signup", async (req, res) => {
   const { name, email, password } = req.body;
 
-  if (!name || !email || !password) {
-    return res.status(400).json({ message: "All fields required" });
-  }
+  if (!name || !email || !password || password.length < 6) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid signup data"
+  });
+}
+
 
   try {
     // Check if user exists
@@ -37,7 +41,11 @@ router.post("/signup", async (req, res) => {
         [name, email, passwordHash]
       );
 
-    res.status(201).json({ message: "User registered successfully" });
+    res.status(201).json({
+  success: true,
+  message: "User registered successfully"
+});
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -72,14 +80,19 @@ router.post("/login", async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email
-      }
-    });
+   res.json({
+  success: true,
+  message: "Login successful",
+  data: {
+    token,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email
+    }
+  }
+});
+
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

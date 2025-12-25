@@ -11,9 +11,13 @@ router.post("/", authMiddleware, async (req, res) => {
   const { mood_level, mood_date } = req.body;
   const userId = req.user.id;
 
-  if (!mood_level || mood_level < 1 || mood_level > 5 || !mood_date) {
-    return res.status(400).json({ message: "Invalid mood data" });
-  }
+ if (!mood_level || mood_level < 1 || mood_level > 5) {
+  return res.status(400).json({
+    success: false,
+    message: "Mood must be between 1 and 5"
+  });
+}
+
 
   try {
     // Try insert
