@@ -39,3 +39,8 @@ app.get("/api/health", (req, res) => {
   });
 });
 
+const gratitudeRoutes = require("./routes/gratitudeRoutes");
+app.use("/api/gratitude", gratitudeRoutes);
+
+
+

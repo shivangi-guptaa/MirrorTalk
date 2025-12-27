@@ -1,37 +1,43 @@
 import { useState } from "react";
 import { loginUser } from "../services/api";
 
-function Login() {
-  const [form, setForm] = useState({
-    email: "",
-    password: ""
-  });
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+function Login({ setToken }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await loginUser(form);
 
-    if (res.success) {
+    const res = await loginUser({ email, password });
+
+    if (res?.success) {
       localStorage.setItem("token", res.data.token);
-      alert("Login successful");
+      setToken(res.data.token);
     } else {
-      alert(res.message);
+      alert("Login failed. Please try again.");
     }
   };
 
   return (
-    <div>
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit}>
-        <input name="email" placeholder="Email" onChange={handleChange} />
-        <input name="password" type="password" placeholder="Password" onChange={handleChange} />
-        <button type="submit">Login</button>
-      </form>
-    </div>
+    <form onSubmit={handleSubmit}>
+      <input
+        type="email"
+        placeholder="Email address"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+
+      <input
+        type="password"
+        placeholder="Password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+      />
+
+      <button className="primary">Continue</button>
+    </form>
   );
 }
 

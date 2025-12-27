@@ -2,32 +2,43 @@ import { useState } from "react";
 import { registerUser } from "../services/api";
 
 function Register() {
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: ""
-  });
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await registerUser(form);
-    alert(res.message);
+    await registerUser({ name, email, password });
+    alert("Account created. You can now sign in.");
   };
 
   return (
-    <div>
-      <h2>Register</h2>
-      <form onSubmit={handleSubmit}>
-        <input name="name" placeholder="Name" onChange={handleChange} />
-        <input name="email" placeholder="Email" onChange={handleChange} />
-        <input name="password" type="password" placeholder="Password" onChange={handleChange} />
-        <button type="submit">Register</button>
-      </form>
-    </div>
+    <form onSubmit={handleSubmit}>
+      <input
+        placeholder="Your name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        required
+      />
+
+      <input
+        type="email"
+        placeholder="Email address"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        required
+      />
+
+      <input
+        type="password"
+        placeholder="Create a password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        required
+      />
+
+      <button className="primary">Create account</button>
+    </form>
   );
 }
 
