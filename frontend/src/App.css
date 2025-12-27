@@ -6,8 +6,9 @@
 body {
   margin: 0;
   padding: 0;
-  background: none;
-}/* =========================
+  background: transparent;
+}
+/* =========================
    RESET
 ========================= */
 
@@ -593,15 +594,16 @@ button.secondary {
 
 /* Cards */
 .card {
-  background: rgba(255,255,255,0.9);
+  background: rgba(255, 255, 255, 0.95);
   border-radius: 20px;
   padding: 26px;
   margin-bottom: 28px;
   box-shadow: 0 12px 30px rgba(0,0,0,0.06);
+  transition: background 0.3s ease;
 }
 
 .app.dark .card {
-  background: rgba(30,30,30,0.9);
+  background: rgba(32, 32, 32, 0.95);
 }
 
 /* Inputs */
@@ -683,4 +685,34 @@ button.secondary {
 .auth-container .muted {
   font-size: 13px;
   margin-bottom: 20px;
+}
+
+/* =========================
+   THEME ROOT (FIX)
+========================= */
+
+.app {
+  min-height: 100vh;
+  transition: background 0.4s ease, color 0.3s ease;
+  background: #faf8f5;
+  color: #222;
+}
+
+.app.dark {
+  background: #121212;
+  color: #eaeaea;
+}
+
+.app.dark textarea,
+.app.dark input,
+.app.dark select {
+  background: #1e1e1e;
+  color: #eaeaea;
+  border-color: #333;
+}
+
+.theme-toggle {
+  font-size: 18px;
+  padding: 10px 14px;
+  border-radius: 999px;
 }
