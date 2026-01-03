@@ -1,49 +1,48 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Login from "./Login";
 import Register from "./Register";
+import Header from "../components/Header";
+import Footer from "../components/Footer";
 
 function Auth({ setToken }) {
-  const [mode, setMode] = useState("login");
+  const [activeTab, setActiveTab] = useState("register"); // ✅ Register first
+  const navigate = useNavigate();
+
+  const handleLogin = (token) => {
+    setToken(token);
+    navigate("/dashboard");
+  };
 
   return (
-    <div className="home-root">
-      <div className="calm-bg" />
+    <>
+      <Header />
 
-      <div className="home-card">
-        <h1 className="home-title">MirrorTalk</h1>
-
-        <p className="home-subtitle">
-          {mode === "login"
-            ? "Welcome back. Take your time."
-            : "Create a quiet space for yourself."}
-        </p>
-
-        <div className="tabs">
+      <div className="auth-container">
+        {/* AUTH TABS */}
+        <div className="auth-tabs">
           <button
-            className={mode === "login" ? "tab active" : "tab"}
-            onClick={() => setMode("login")}
+            className={activeTab === "register" ? "auth-tab active" : "auth-tab"}
+            onClick={() => setActiveTab("register")}
           >
-            Login
+            Create account
           </button>
+
           <button
-            className={mode === "register" ? "tab active" : "tab"}
-            onClick={() => setMode("register")}
+            className={activeTab === "login" ? "auth-tab active" : "auth-tab"}
+            onClick={() => setActiveTab("login")}
           >
-            Register
+            Sign in
           </button>
         </div>
 
-        {mode === "login" ? (
-          <Login setToken={setToken} />
-        ) : (
-          <Register />
-        )}
-
-        <p className="home-note">
-          No pressure. No judgment. You’re allowed to move slowly.
-        </p>
+        {/* TAB CONTENT */}
+        {activeTab === "register" && <Register />}
+        {activeTab === "login" && <Login setToken={handleLogin} />}
       </div>
-    </div>
+
+      <Footer />
+    </>
   );
 }
 

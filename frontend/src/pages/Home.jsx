@@ -1,33 +1,31 @@
-function Home({ onStart }) {
+import { useNavigate } from "react-router-dom";
+
+function Home() {
+  const navigate = useNavigate();
+
   return (
     <div className="home-root">
-      {/* Abstract calming background */}
-      <div className="calm-bg">
-        <span className="shape shape-1" />
-        <span className="shape shape-2" />
-        <span className="shape shape-3" />
-      </div>
+      <div className="calm-bg" />
 
       <div className="home-card">
         <h1 className="home-title">MirrorTalk</h1>
 
         <p className="home-subtitle">
-          A quiet space to slow down, reflect, and meet yourself —
-          without judgment.
+          A quiet space to slow down, reflect, and understand yourself — without judgment.
         </p>
 
         <ul className="home-points">
-          <li>📝 Write freely, just for you</li>
-          <li>🌱 Notice your moods gently</li>
-          <li>🤍 Build clarity one day at a time</li>
+          <li>📝 Write freely, just for yourself</li>
+          <li>🌱 Track your mood gently</li>
+          <li>🤍 Build self-awareness, one day at a time</li>
         </ul>
 
-        <button className="home-button" onClick={onStart}>
+        <button className="home-button" onClick={() => navigate("/auth")}>
           Begin gently
         </button>
 
         <p className="home-note">
-          No pressure. No streaks. You’re allowed to move slowly.
+          No pressure. No streaks. Just honesty.
         </p>
       </div>
     </div>

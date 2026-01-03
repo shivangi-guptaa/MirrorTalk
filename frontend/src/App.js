@@ -1,3 +1,4 @@
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useState } from "react";
 import Home from "./pages/Home";
 import Auth from "./pages/Auth";
@@ -5,27 +6,45 @@ import Dashboard from "./pages/Dashboard";
 import "./App.css";
 
 function App() {
-  const [started, setStarted] = useState(false);
   const [token, setToken] = useState(localStorage.getItem("token"));
-  const [theme, setTheme] = useState(
-    localStorage.getItem("theme") || "light"
-  );
+ 
 
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    localStorage.setItem("theme", newTheme);
-  };
+ const [darkMode, setDarkMode] = useState(
+  localStorage.getItem("theme") === "dark"
+);
+
+const toggleTheme = () => {
+  setDarkMode((prev) => {
+    const next = !prev;
+    localStorage.setItem("theme", next ? "dark" : "light");
+    return next;
+  });
+};
 
   return (
-    <div className={`app ${theme}`}>
-      {!started && <Home onStart={() => setStarted(true)} />}
+    <div className={`app ${darkMode ? "dark" : ""}`}>
+      <Routes>
+        <Route path="/" element={<Home />} />
 
-      {started && !token && <Auth setToken={setToken} />}
+        <Route
+          path="/auth"
+          element={<Auth setToken={setToken} />}
+        />
 
-      {started && token && (
-        <Dashboard setToken={setToken} toggleTheme={toggleTheme} />
-      )}
+        <Route
+          path="/dashboard"
+          element={
+            token ? (
+              <Dashboard
+                setToken={setToken}
+                toggleTheme={toggleTheme}
+              />
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        />
+      </Routes>
     </div>
   );
 }

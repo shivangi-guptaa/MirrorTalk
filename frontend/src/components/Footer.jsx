@@ -1,6 +1,6 @@
 function Footer() {
   return (
-    <footer className="auth-footer">
+    <footer style={{ textAlign: "center", marginTop: "40px", opacity: 0.7 }}>
       <p>
         No pressure. No judgment.  
         <br />

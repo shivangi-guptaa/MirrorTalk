@@ -1,8 +1,8 @@
 function Header() {
   return (
-    <header className="auth-header">
+    <header className="header">
       <h1>MirrorTalk</h1>
-      <p>A quiet space for honest reflection</p>
+      <p className="muted">A quiet space for honest reflection</p>
     </header>
   );
 }

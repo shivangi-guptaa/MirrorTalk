@@ -8,10 +8,14 @@ import {
   saveGratitude,
   getJournals
 } from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 import Card from "../components/Card";
 import EmptyState from "../components/EmptyState";
 import MoodTrendGraph from "../components/MoodTrendGraph";
+import "../index.css";
+import "../App.css";
+
 
 function Dashboard({ setToken, toggleTheme }) {
   const [activeTab, setActiveTab] = useState("today");
@@ -100,23 +104,33 @@ function Dashboard({ setToken, toggleTheme }) {
     setGratitudeHistory(normalizeArray(await getGratitudeHistory()));
   };
 
+  const navigate = useNavigate();
+
+
   const logout = () => {
     localStorage.removeItem("token");
     setToken(null);
+    navigate("/auth");
   };
-
   /* ---------------- UI ---------------- */
 
   return (
     <div className="container page-transition">
       {/* HEADER */}
-      <header className="header">
-        <h1>MirrorTalk</h1>
-        <div>
-          <button className="secondary" onClick={toggleTheme}>🌙</button>
-          <button className="secondary" onClick={logout}>Logout</button>
-        </div>
-      </header>
+      
+     <header className="header">
+  <h1>MirrorTalk</h1>
+
+  <div className="header-actions">
+    <button className="icon-button" onClick={toggleTheme} aria-label="Toggle theme">
+      🌙
+    </button>
+
+    <button className="logout-button" onClick={logout}>
+      Logout
+    </button>
+  </div>
+</header>
 
       {/* TABS */}
       <div className="tabs">

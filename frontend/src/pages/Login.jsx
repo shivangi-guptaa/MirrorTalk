@@ -4,9 +4,13 @@ import { loginUser } from "../services/api";
 function Login({ setToken }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
 
     const res = await loginUser({ email, password });
 
@@ -14,8 +18,10 @@ function Login({ setToken }) {
       localStorage.setItem("token", res.data.token);
       setToken(res.data.token);
     } else {
-      alert("Login failed. Please try again.");
+      setError("Invalid email or password");
     }
+
+    setLoading(false);
   };
 
   return (
@@ -26,6 +32,7 @@ function Login({ setToken }) {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
+        autoFocus
       />
 
       <input
@@ -36,7 +43,11 @@ function Login({ setToken }) {
         required
       />
 
-      <button className="primary">Continue</button>
+      {error && <p className="error">{error}</p>}
+
+      <button className="primary" disabled={loading}>
+        {loading ? "Signing in..." : "Sign in"}
+      </button>
     </form>
   );
 }

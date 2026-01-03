@@ -1,14 +1,78 @@
+# MirrorTalk 🌱  
+A calm, private space for daily reflection and emotional awareness.
 
-MirrorTalk is a minimal journaling and mood-tracking web application designed for students to reflect on their daily thoughts and emotional well-being in a private, distraction-free environment. The platform allows users to securely log journal entries, track mood patterns, and view simple insights over time.
-=======
-MirrorTalk is a secure journaling and mood-tracking web application built using MERN + MySQL, enabling users to privately log daily reflections, track emotional trends, and view simple insights over time.
+MirrorTalk is a minimal journaling and mood-tracking web application designed for
+students who want a safe, distraction-free way to reflect on their thoughts and
+emotions.
 
+---
 
-Core Features:
-User authentication (signup & login)
-Daily journal entries (create, view, edit, delete)
-Mood tracking (1–5 scale)
-Weekly mood summary
-Secure data storage using MySQL
+## 🧠 Why MirrorTalk?
 
+Most journaling apps focus on productivity and streaks.
+MirrorTalk focuses on **emotional safety**.
 
+The interface is intentionally calm, minimal, and judgment-free —
+encouraging honest reflection without pressure.
+
+---
+
+## 🚀 Features
+
+- 🔐 Secure authentication (JWT-based)
+- 📝 Daily private journal entries
+- 😊 Mood tracking (1–5 scale)
+- 📊 Weekly emotional insights
+- 🙏 Gratitude journaling
+- 🌙 Light / Dark mode
+- 🔒 Protected routes & session persistence
+
+---
+
+## 🛠 Tech Stack
+
+**Frontend**
+- React
+- React Router
+- Custom CSS (no UI libraries)
+
+**Backend**
+- Node.js
+- Express
+- MySQL
+- JWT Authentication
+
+---
+
+## 📸 Screenshots
+
+> Dashboard – Daily Reflection & Mood Tracking
+
+_Add screenshots here_
+
+---
+
+## 💡 Design Philosophy
+
+MirrorTalk prioritizes calm over clutter.
+
+- Soft colors to reduce cognitive load  
+- Card-based layout for clarity  
+- Gentle micro-animations  
+- Minimal UI to encourage reflection  
+
+---
+
+## 🔮 Future Improvements
+
+- Emotion trend charts
+- Export journal data
+- Accessibility enhancements (ARIA)
+- Modular CSS architecture
+
+---
+
+## 👤 Author
+
+Built with intention by **Shivangi**  
+_MCA Student | Aspiring Software Engineer_
