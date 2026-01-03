@@ -46,11 +46,20 @@ encouraging honest reflection without pressure.
 
 ## 📸 Screenshots
 
+> Home Page:
+![alt text](image-1.png)
+
+> Sign up/Sign in page
+![alt text](image-3.png)
+
 > Dashboard – Daily Reflection & Mood Tracking
+![alt text](image-4.png)
+![alt text](image-5.png)
+![alt text](image-8.png)
 
-_Add screenshots here_
-
----
+> My profile - to track history
+![alt text](image-6.png)
+![alt text](image-7.png)
 
 ## 💡 Design Philosophy
 

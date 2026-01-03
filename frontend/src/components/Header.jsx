@@ -1,8 +1,14 @@
+import { useNavigate } from "react-router-dom";
+
 function Header() {
+  const navigate = useNavigate();
+
   return (
-    <header className="header">
-      <h1>MirrorTalk</h1>
-      <p className="muted">A quiet space for honest reflection</p>
+    <header className="auth-header">
+      <h1 className="brand" onClick={() => navigate("/")}>
+        MirrorTalk
+      </h1>
+      <p className="tagline">A quiet space for honest reflection</p>
     </header>
   );
 }

@@ -1,8 +1,8 @@
 function Footer() {
   return (
-    <footer style={{ textAlign: "center", marginTop: "40px", opacity: 0.7 }}>
+    <footer className="footer">
       <p>
-        No pressure. No judgment.  
+        No pressure. No judgment.
         <br />
         Move at your own pace 🌱
       </p>
