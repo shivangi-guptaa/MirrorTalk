@@ -117,7 +117,7 @@ function Dashboard({ setToken, toggleTheme }) {
   return (
     <div className="container page-transition">
       {/* HEADER */}
-      
+
      <header className="header">
   <h1>MirrorTalk</h1>
 
@@ -151,25 +151,45 @@ function Dashboard({ setToken, toggleTheme }) {
       {/* TODAY */}
       {activeTab === "today" && (
         <>
-          <Card title="📝 Journal" subtitle="Write honestly. This is just for you.">
-            <form onSubmit={saveJournal}>
-              <textarea
-                placeholder="What stayed with you today?"
-                value={entry}
-                onChange={(e) => setEntry(e.target.value)}
-              />
-              <button className="primary">Save</button>
-            </form>
-          </Card>
+        <div className="journal-section">
+  <div className="journal-header">
+    <p className="journal-date">
+      {new Date().toLocaleDateString(undefined, {
+        weekday: "long",
+        day: "numeric",
+        month: "long"
+      })}
+    </p>
+    <h2 className="journal-title">How are you feeling right now?</h2>
+  </div>
+
+  <form onSubmit={saveJournal}>
+    <textarea
+      className="journal-textarea"
+      placeholder="Write freely. This space is just for you."
+      value={entry}
+      onChange={(e) => setEntry(e.target.value)}
+    />
+
+    <button className="journal-save-btn">Save gently</button>
+  </form>
+</div>
+
 
           <Card title="😊 Mood" subtitle="There’s no right or wrong answer.">
-            <select value={mood} onChange={(e) => setMood(Number(e.target.value))}>
-              {[1, 2, 3, 4, 5].map((m) => (
-                <option key={m} value={m}>
-                  {moodMap[m]}
-                </option>
-              ))}
-            </select>
+            <div className="mood-row">
+  {[1, 2, 3, 4, 5].map((m) => (
+    <button
+      key={m}
+      type="button"
+      className={`mood-pill ${mood === m ? "active" : ""}`}
+      onClick={() => setMood(m)}
+    >
+      {moodMap[m]}
+    </button>
+  ))}
+</div>
+
             <button className="secondary" onClick={saveMood}>Save mood</button>
           </Card>
 
