@@ -14,4 +14,4 @@ yarn-error.log*
 Thumbs.db
 
 # Firebase service account
-frontend/src/config/firebaseServiceAccount.json
+backend/config/firebaseServiceAccount.json

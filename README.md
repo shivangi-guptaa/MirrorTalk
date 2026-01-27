@@ -47,7 +47,7 @@ encouraging honest reflection without pressure.
 ## 📸 Screenshots
 
 > Home Page:
-![alt text](image-1.png)
+![alt text](image.png)
 
 
 > Sign up/Sign in page
