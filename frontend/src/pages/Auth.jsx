@@ -2,11 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Login from "./Login";
 import Register from "./Register";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
 
 function Auth({ setToken }) {
-  const [activeTab, setActiveTab] = useState("register"); // ✅ Register first
+  const [activeTab, setActiveTab] = useState("register");
   const navigate = useNavigate();
 
   const handleLogin = (token) => {
@@ -15,34 +13,42 @@ function Auth({ setToken }) {
   };
 
   return (
-    <>
-      <Header />
+    <div className="auth-page">
+      {/* BRANDING */}
+      <h1 className="logo">MirrorTalk</h1>
+      <p className="tagline">A quiet space for honest reflection</p>
 
-      <div className="auth-container">
-        {/* AUTH TABS */}
-        <div className="auth-tabs">
+      {/* CARD */}
+      <div className="auth-card">
+        {/* TABS */}
+        <div className="auth-toggle">
           <button
-            className={activeTab === "register" ? "auth-tab active" : "auth-tab"}
+            className={activeTab === "register" ? "active" : ""}
             onClick={() => setActiveTab("register")}
           >
             Create account
           </button>
 
           <button
-            className={activeTab === "login" ? "auth-tab active" : "auth-tab"}
+            className={activeTab === "login" ? "active" : ""}
             onClick={() => setActiveTab("login")}
           >
             Sign in
           </button>
         </div>
 
-        {/* TAB CONTENT */}
+        {/* CONTENT */}
         {activeTab === "register" && <Register />}
         {activeTab === "login" && <Login setToken={handleLogin} />}
       </div>
 
-      <Footer />
-    </>
+      {/* FOOTER TEXT */}
+      <p className="auth-footer">
+        No pressure. No judgment.
+        <br />
+        Move at your own pace 🌱
+      </p>
+    </div>
   );
 }
 

@@ -8,7 +8,6 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-Why this is correct
 
 password_hash → never store raw passwords
 
@@ -18,7 +17,7 @@ updated_at → professional auditing
 
 Clean auth isolation
 
-📌 Interview line:
+
 
 “Authentication data is isolated in the users table for security and scalability.”
 
@@ -37,14 +36,14 @@ CREATE TABLE journals (
 
     INDEX idx_user_date (user_id, entry_date)
 );
-Why this is expert-level
+
 user_id + entry_date indexed → fast lookups
 
 One user → many journals
 
 ON DELETE CASCADE → clean data removal
 
-📌 Interview line:
+
 
 “Journals are user-scoped and indexed by date for efficient retrieval.”
 
@@ -70,7 +69,7 @@ UNIQUE (user_id, mood_date) → one mood per day
 
 Prevents dirty data
 
-📌 Interview line:
+
 
 “I enforced a unique constraint to prevent multiple mood entries per day per user.”
 

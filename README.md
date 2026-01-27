@@ -51,6 +51,7 @@ encouraging honest reflection without pressure.
 
 
 > Sign up/Sign in page
+![alt text](image-3-0.png)
 ![alt text](image-3.png)
 
 > Dashboard – Daily Reflection & Mood Tracking
