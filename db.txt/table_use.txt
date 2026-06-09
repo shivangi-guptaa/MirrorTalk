@@ -69,6 +69,18 @@ UNIQUE (user_id, mood_date) → one mood per day
 
 Prevents dirty data
 
+table 4:
+CREATE TABLE gratitude_entries (
+    id INT NOT NULL AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    gratitude_1 TEXT,
+    gratitude_2 TEXT,
+    gratitude_3 TEXT,
+    entry_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY user_id (user_id)
+);
 
 
 “I enforced a unique constraint to prevent multiple mood entries per day per user.”

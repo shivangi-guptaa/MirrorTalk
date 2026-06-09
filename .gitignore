@@ -15,3 +15,5 @@ Thumbs.db
 
 # Firebase service account
 backend/config/firebaseServiceAccount.json
+
+.vscode

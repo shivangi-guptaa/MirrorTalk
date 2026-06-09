@@ -143,6 +143,7 @@ The app will be available at `http://localhost:3000`.
 
 **Dashboard — Daily Reflection & Mood Tracking**
 ![Dashboard](docs/screenshots/dashboard.png)
+![Dashboard](docs/screenshots/dashboard2.png)
 
 **Profile — History & Insights**
 ![Profile](docs/screenshots/profile.png)
