@@ -20,7 +20,6 @@ export const registerUser = async (data) => {
   return res.json();
 };
 
-// ✅ NEW: Google Auth
 export const googleAuth = async (firebaseToken) => {
   const res = await fetch(`${API_URL}/auth/google`, {
     method: "POST",
@@ -58,6 +57,14 @@ export const createJournal = async (data) => {
   return res.json();
 };
 
+export const deleteJournal = async (id) => {
+  const res = await fetch(`${API_URL}/journals/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeader(),
+  });
+  return res.json();
+};
+
 /* ================= MOOD ================= */
 
 export const addMood = async (data) => {
@@ -83,6 +90,14 @@ export const getWeeklyMoodSummary = async () => {
   return res.json();
 };
 
+export const deleteMood = async (id) => {
+  const res = await fetch(`${API_URL}/moods/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeader(),
+  });
+  return res.json();
+};
+
 /* ================= GRATITUDE ================= */
 
 export const saveGratitude = async (data) => {
@@ -96,6 +111,14 @@ export const saveGratitude = async (data) => {
 
 export const getGratitudeHistory = async () => {
   const res = await fetch(`${API_URL}/gratitude`, {
+    headers: getAuthHeader(),
+  });
+  return res.json();
+};
+
+export const deleteGratitude = async (id) => {
+  const res = await fetch(`${API_URL}/gratitude/${id}`, {
+    method: "DELETE",
     headers: getAuthHeader(),
   });
   return res.json();

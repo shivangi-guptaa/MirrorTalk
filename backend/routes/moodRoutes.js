@@ -11,16 +11,14 @@ router.post("/", authMiddleware, async (req, res) => {
   const { mood_level, mood_date } = req.body;
   const userId = req.user.id;
 
- if (!mood_level || mood_level < 1 || mood_level > 5) {
-  return res.status(400).json({
-    success: false,
-    message: "Mood must be between 1 and 5"
-  });
-}
-
+  if (!mood_level || mood_level < 1 || mood_level > 5) {
+    return res.status(400).json({
+      success: false,
+      message: "Mood must be between 1 and 5"
+    });
+  }
 
   try {
-    // Try insert
     await db.promise().query(
       "INSERT INTO moods (user_id, mood_level, mood_date) VALUES (?, ?, ?)",
       [userId, mood_level, mood_date]
@@ -28,7 +26,6 @@ router.post("/", authMiddleware, async (req, res) => {
 
     res.status(201).json({ message: "Mood added successfully" });
   } catch (err) {
-    // Duplicate mood for same day → update instead
     if (err.code === "ER_DUP_ENTRY") {
       await db.promise().query(
         "UPDATE moods SET mood_level = ? WHERE user_id = ? AND mood_date = ?",
@@ -44,13 +41,14 @@ router.post("/", authMiddleware, async (req, res) => {
 
 /* ======================
    GET MOOD HISTORY
+   ✅ FIXED: added id to SELECT so frontend can delete by id
 ====================== */
 router.get("/", authMiddleware, async (req, res) => {
   const userId = req.user.id;
 
   try {
     const [moods] = await db.promise().query(
-      "SELECT mood_level, mood_date FROM moods WHERE user_id = ? ORDER BY mood_date DESC",
+      "SELECT id, mood_level, mood_date FROM moods WHERE user_id = ? ORDER BY mood_date DESC",
       [userId]
     );
 
@@ -82,6 +80,32 @@ router.get("/weekly-summary", authMiddleware, async (req, res) => {
     );
 
     res.json(summary[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ======================
+   DELETE MOOD ENTRY
+====================== */
+router.delete("/:id", authMiddleware, async (req, res) => {
+  const moodId = req.params.id;
+  const userId = req.user.id;
+
+  try {
+    const [result] = await db.promise().query(
+      "DELETE FROM moods WHERE id = ? AND user_id = ?",
+      [moodId, userId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Mood entry not found"
+      });
+    }
+
+    res.json({ success: true, message: "Mood entry deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
