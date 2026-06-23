@@ -397,33 +397,67 @@ function Dashboard({ setToken, toggleTheme }) {
         )}
 
         {/* TRENDS TAB */}
-        {activeTab === "trends" && (
-          <div className="tab-content">
-            <div className="dash-card">
-              <h2 className="card-title">This week</h2>
-              <p className="card-sub">It's about noticing, not fixing.</p>
-              {summary ? (
-                <div className="summary-pills">
-                  <div className="summary-pill">
-                    <span className="summary-pill-val">{moodMap[Math.round(summary.avg_mood)]}</span>
-                    <span className="summary-pill-label">average mood</span>
-                  </div>
-                  <div className="summary-pill">
-                    <span className="summary-pill-val">{summary.total_days}</span>
-                    <span className="summary-pill-label">days tracked</span>
-                  </div>
-                </div>
-              ) : (
-                <EmptyState message="Your weekly reflection will appear here." />
-              )}
-            </div>
-            <div className="dash-card">
-              <h2 className="card-title">Patterns over time</h2>
-              <p className="card-sub">Your mood journey</p>
-              <MoodTrendGraph moods={moods} />
-            </div>
+   {activeTab === "trends" && (
+  <div className="tab-content">
+
+    <div className="analytics-grid">
+      <div className="analytics-card">
+        <h3>Total Mood Entries</h3>
+        <p>{moods.length}</p>
+      </div>
+
+      <div className="analytics-card">
+        <h3>Average Mood</h3>
+        <p>
+          {summary?.avg_mood
+            ? summary.avg_mood.toFixed(1)
+            : "-"}
+        </p>
+      </div>
+
+      <div className="analytics-card">
+        <h3>Days Tracked</h3>
+        <p>{summary?.total_days || 0}</p>
+      </div>
+    </div>
+
+    <div className="dash-card">
+      <h2 className="card-title">This week</h2>
+      <p className="card-sub">It's about noticing, not fixing.</p>
+
+      {summary ? (
+        <div className="summary-pills">
+          <div className="summary-pill">
+            <span className="summary-pill-val">
+              {moodMap[Math.round(summary.avg_mood)]}
+            </span>
+            <span className="summary-pill-label">
+              average mood
+            </span>
           </div>
-        )}
+
+          <div className="summary-pill">
+            <span className="summary-pill-val">
+              {summary.total_days}
+            </span>
+            <span className="summary-pill-label">
+              days tracked
+            </span>
+          </div>
+        </div>
+      ) : (
+        <EmptyState message="Your weekly reflection will appear here." />
+      )}
+    </div>
+
+    <div className="dash-card">
+      <h2 className="card-title">Patterns over time</h2>
+      <p className="card-sub">Your mood journey</p>
+      <MoodTrendGraph moods={moods} />
+    </div>
+
+  </div>
+)}
 
         {/* GRATITUDE TAB */}
         {activeTab === "gratitude" && (
@@ -435,27 +469,45 @@ function Dashboard({ setToken, toggleTheme }) {
                 <EmptyState message="Your gratitude entries will appear here." />
               ) : (
                 <div className="gratitude-history">
-                  {gratitudeHistory.map((g, i) => (
-                    <div key={g.id ?? i} className="grat-entry">
-                      <span className="grat-entry-date">
-                        {new Date(g.entry_date).toLocaleDateString(undefined, {
-                          day: "numeric", month: "short", year: "numeric",
-                        })}
-                      </span>
-                      <div className="grat-items">
-                        {g.gratitude_1 && <span className="grat-tag">{g.gratitude_1}</span>}
-                        {g.gratitude_2 && <span className="grat-tag">{g.gratitude_2}</span>}
-                        {g.gratitude_3 && <span className="grat-tag">{g.gratitude_3}</span>}
-                      </div>
-                      <button
-                        className="delete-btn"
-                        title="Delete gratitude entry"
-                        onClick={() => askDelete("gratitude", g.id, g.entry_date)}
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  ))}
+                  {gratitudeHistory.map((g, i) => {
+  console.log("GRATITUDE:", g);
+
+  return (
+    <div key={g.id ?? i} className="grat-entry">
+      <span className="grat-entry-date">
+        {new Date(g.entry_date).toLocaleDateString(undefined, {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })}
+      </span>
+
+      <div className="grat-items">
+        {g.gratitude_1 && (
+          <span className="grat-tag">{g.gratitude_1}</span>
+        )}
+
+        {g.gratitude_2 && (
+          <span className="grat-tag">{g.gratitude_2}</span>
+        )}
+
+        {g.gratitude_3 && (
+          <span className="grat-tag">{g.gratitude_3}</span>
+        )}
+      </div>
+
+      <button
+        className="delete-btn"
+        title="Delete gratitude entry"
+        onClick={() =>
+          askDelete("gratitude", g.id, g.entry_date)
+        }
+      >
+        🗑️
+      </button>
+    </div>
+  );
+})}
                 </div>
               )}
             </div>

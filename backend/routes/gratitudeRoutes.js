@@ -61,13 +61,16 @@ router.post("/", authMiddleware, async (req, res) => {
 /* =========================
    GET GRATITUDE HISTORY
 ========================= */
+/* =========================
+   GET GRATITUDE HISTORY
+========================= */
 router.get("/", authMiddleware, async (req, res) => {
   const userId = req.user.id || req.user.userId;
 
   try {
     const [rows] = await db.promise().query(
       `
-      SELECT gratitude_1, gratitude_2, gratitude_3, entry_date
+      SELECT id, gratitude_1, gratitude_2, gratitude_3, entry_date
       FROM gratitude_entries
       WHERE user_id = ?
       ORDER BY entry_date DESC
@@ -75,9 +78,40 @@ router.get("/", authMiddleware, async (req, res) => {
       [userId]
     );
 
+    console.log("ROWS FROM MYSQL:", rows);
+
     res.json({
       success: true,
       data: rows
+    });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
+  }
+});
+
+router.delete("/:id", authMiddleware, async (req, res) => {
+  const entryId = req.params.id;
+  const userId = req.user.id || req.user.userId;
+
+  try {
+    const [result] = await db.promise().query(
+      "DELETE FROM gratitude_entries WHERE id = ? AND user_id = ?",
+      [entryId, userId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Gratitude entry not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Gratitude entry deleted"
     });
   } catch (err) {
     res.status(500).json({
