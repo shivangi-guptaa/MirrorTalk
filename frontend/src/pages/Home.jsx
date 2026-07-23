@@ -1,35 +1,71 @@
 import "./home.css";
 import { useNavigate } from "react-router-dom";
 
-
+const features = [
+  { icon: "📓", text: "Write freely, just for yourself" },
+  { icon: "🌱", text: "Track your mood gently, day by day" },
+  { icon: "📊", text: "See patterns in your emotional journey" },
+  { icon: "🤍", text: "Build self-awareness without judgment" },
+];
 
 function Home() {
   const navigate = useNavigate();
 
   return (
-    <div className="home-root">
-      <div className="calm-bg" />
+    <div className="home-shell">
+      {/* LEFT — dark green brand panel */}
+      <div className="home-left">
+        <div className="home-left-content">
+          <div className="home-brand">
+            <span className="home-brand-dot" />
+            <span className="home-brand-name">MirrorTalk</span>
+          </div>
 
-      <div className="home-card">
-        <h1 className="home-title">MirrorTalk</h1>
+          <div className="home-hero">
+            <h1 className="home-hero-title">
+              A quiet space<br />for honest reflection.
+            </h1>
+            <p className="home-hero-sub">
+              No pressure. No streaks. No judgment.<br />
+              Just you, your thoughts, and a little clarity.
+            </p>
+          </div>
 
-        <p className="home-subtitle">
-          A quiet space to slow down, reflect, and understand yourself — without judgment.
-        </p>
+          <ul className="home-features">
+            {features.map((f, i) => (
+              <li key={i} className="home-feature-item">
+                <span className="home-feature-icon">{f.icon}</span>
+                <span className="home-feature-text">{f.text}</span>
+              </li>
+            ))}
+          </ul>
 
-        <ul className="home-points">
-          <li>📝 Write freely, just for yourself</li>
-          <li>🌱 Track your mood gently</li>
-          <li>🤍 Build self-awareness, one day at a time</li>
-        </ul>
+          <div className="home-left-footer">
+            Built by a student, for students.
+          </div>
+        </div>
+      </div>
 
-        <button className="home-button" onClick={() => navigate("/auth")}>
-          Begin gently
-        </button>
+      {/* RIGHT — CTA panel */}
+      <div className="home-right">
+        <div className="home-cta-wrap">
+          <h2 className="home-cta-title">Begin your journey</h2>
+          <p className="home-cta-sub">
+            A quiet space to slow down, reflect, and understand yourself — without judgment.
+          </p>
 
-        <p className="home-note">
-          No pressure. No streaks. Just honesty.
-        </p>
+          <ul className="home-cta-points">
+            <li>✦ No streaks. No pressure.</li>
+            <li>✦ Private and just for you.</li>
+            <li>✦ One entry at a time.</li>
+          </ul>
+
+          <button className="home-cta-btn" onClick={() => navigate("/auth")}>
+            Begin gently <span className="home-btn-arrow">→</span>
+          </button>
+
+          <p className="home-cta-note">Move at your own pace 🌱</p>
+        </div>
       </div>
     </div>
   );

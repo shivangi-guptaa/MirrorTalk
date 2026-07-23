@@ -41,8 +41,8 @@ function MoodTrendGraph({ moods }) {
       {
         label: "Mood Trend",
         data: moods.map(m => m.mood_level),
-        borderColor: "#6c63ff",
-        backgroundColor: "rgba(108, 99, 255, 0.1)",
+        borderColor: "#3b6d11",
+        backgroundColor: "rgba(59, 109, 17, 0.1)",
         tension: 0.4,
         pointRadius: 5
       }

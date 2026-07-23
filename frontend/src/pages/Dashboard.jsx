@@ -20,6 +20,30 @@ import "../App.css";
 const moodMap = { 1: "😭", 2: "😔", 3: "😐", 4: "🙂", 5: "😄" };
 const moodLabel = { 1: "Very low", 2: "Low", 3: "Neutral", 4: "Good", 5: "Very good" };
 
+/* ── Edit Profile Modal ── */
+function ProfileModal({ profile, onSave, onCancel }) {
+  const [name, setName] = useState(profile.name);
+  const [bio, setBio] = useState(profile.bio);
+  return (
+    <div className="modal-overlay" onClick={onCancel}>
+      <div className="modal-box profile-modal" onClick={(e) => e.stopPropagation()}>
+        <h3 className="profile-modal-title">Edit Profile</h3>
+        <div className="profile-modal-avatar">{name.charAt(0).toUpperCase()}</div>
+        <div className="profile-form">
+          <label className="profile-label">Display Name</label>
+          <input className="profile-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
+          <label className="profile-label">Bio</label>
+          <input className="profile-input" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="e.g. NIT Bhopal" />
+        </div>
+        <div className="modal-actions">
+          <button className="modal-btn-cancel" onClick={onCancel}>Cancel</button>
+          <button className="btn-primary profile-save-btn" onClick={() => onSave({ name: name.trim() || 'User', bio: bio.trim() })}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Confirm Modal ── */
 function ConfirmModal({ message, onConfirm, onCancel }) {
   return (
@@ -36,11 +60,19 @@ function ConfirmModal({ message, onConfirm, onCancel }) {
 }
 
 function Dashboard({ setToken, toggleTheme }) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("today");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [profile, setProfile] = useState(() => {
+    const saved = localStorage.getItem('mirrorTalkProfile');
+    return saved ? JSON.parse(saved) : { name: 'Shivangi', bio: 'NIT Bhopal' };
+  });
 
   const [entry, setEntry] = useState("");
   const [mood, setMood] = useState(3);
-  const [moodChanged, setMoodChanged] = useState(false);
   const [notification, setNotification] = useState("");
 
   const [moods, setMoods] = useState([]);
@@ -53,11 +85,15 @@ function Dashboard({ setToken, toggleTheme }) {
   const [g3, setG3] = useState("");
 
   const [journalSearch, setJournalSearch] = useState("");
-
-  // { type: 'journal'|'mood'|'gratitude', id, label }
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  const normalizeArray = (res) => {
+  const handleApiResponse = (res) => {
+    if (res?.message === 'Token is not valid' || res?.message === 'No token, authorization denied') {
+      localStorage.removeItem('token');
+      setToken(null);
+      navigate('/auth');
+      return [];
+    }
     if (Array.isArray(res)) return res;
     if (res?.success && Array.isArray(res.data)) return res.data;
     return [];
@@ -69,45 +105,47 @@ function Dashboard({ setToken, toggleTheme }) {
   };
 
   useEffect(() => {
-    getMoods().then((res) => setMoods(normalizeArray(res)));
-    getWeeklyMoodSummary().then(setSummary);
-    getGratitudeHistory().then((res) => setGratitudeHistory(normalizeArray(res)));
-    getJournals().then((res) => setJournals(normalizeArray(res)));
+    Promise.all([
+      getMoods().then((res) => setMoods(handleApiResponse(res))),
+      getWeeklyMoodSummary().then(setSummary),
+      getGratitudeHistory().then((res) => setGratitudeHistory(handleApiResponse(res))),
+      getJournals().then((res) => setJournals(handleApiResponse(res)))
+    ])
+    .catch(console.error)
+    .finally(() => setLoading(false));
   }, []);
 
   const saveJournal = async (e) => {
     e.preventDefault();
     if (!entry.trim()) return;
-    await createJournal({
-      entry_text: entry,
-      entry_date: new Date().toISOString().split("T")[0],
-    });
-    setEntry("");
-    setJournals(normalizeArray(await getJournals()));
-    showNotification("📝 Journal saved");
-  };
-
-  const saveMood = async () => {
-    await addMood({
-      mood_level: mood,
-      mood_date: new Date().toISOString().split("T")[0],
-    });
-    setMoods(normalizeArray(await getMoods()));
-    setSummary(await getWeeklyMoodSummary());
-    showNotification("😊 Mood saved");
+    try {
+      await createJournal({
+        entry_text: entry,
+        entry_date: new Date().toISOString().split("T")[0],
+      });
+      setEntry("");
+      setJournals(handleApiResponse(await getJournals()));
+      showNotification("📝 Journal saved");
+    } catch {
+      showNotification("❌ Failed to save journal");
+    }
   };
 
   const saveGratitudeEntry = async () => {
     if (!g1 && !g2 && !g3) return;
-    await saveGratitude({
-      gratitude_1: g1 || null,
-      gratitude_2: g2 || null,
-      gratitude_3: g3 || null,
-      entry_date: new Date().toISOString().split("T")[0],
-    });
-    setG1(""); setG2(""); setG3("");
-    setGratitudeHistory(normalizeArray(await getGratitudeHistory()));
-    showNotification("🙏 Gratitude saved");
+    try {
+      await saveGratitude({
+        gratitude_1: g1 || null,
+        gratitude_2: g2 || null,
+        gratitude_3: g3 || null,
+        entry_date: new Date().toISOString().split("T")[0],
+      });
+      setG1(""); setG2(""); setG3("");
+      setGratitudeHistory(handleApiResponse(await getGratitudeHistory()));
+      showNotification("🙏 Gratitude saved");
+    } catch {
+      showNotification("❌ Failed to save gratitude");
+    }
   };
 
   /* ── Delete handlers ── */
@@ -120,23 +158,26 @@ function Dashboard({ setToken, toggleTheme }) {
     const { type, id } = confirmDelete;
     setConfirmDelete(null);
 
-    if (type === "journal") {
-      await deleteJournal(id);
-      setJournals(normalizeArray(await getJournals()));
-      showNotification("🗑️ Journal deleted");
-    } else if (type === "mood") {
-      await deleteMood(id);
-      setMoods(normalizeArray(await getMoods()));
-      setSummary(await getWeeklyMoodSummary());
-      showNotification("🗑️ Mood entry deleted");
-    } else if (type === "gratitude") {
-      await deleteGratitude(id);
-      setGratitudeHistory(normalizeArray(await getGratitudeHistory()));
-      showNotification("🗑️ Gratitude entry deleted");
+    try {
+      if (type === "journal") {
+        await deleteJournal(id);
+        setJournals(handleApiResponse(await getJournals()));
+        showNotification("🗑️ Journal deleted");
+      } else if (type === "mood") {
+        await deleteMood(id);
+        setMoods(handleApiResponse(await getMoods()));
+        setSummary(await getWeeklyMoodSummary());
+        showNotification("🗑️ Mood entry deleted");
+      } else if (type === "gratitude") {
+        await deleteGratitude(id);
+        setGratitudeHistory(handleApiResponse(await getGratitudeHistory()));
+        showNotification("🗑️ Gratitude entry deleted");
+      }
+    } catch {
+      showNotification("❌ Failed to delete");
     }
   };
 
-  const navigate = useNavigate();
   const logout = () => {
     localStorage.removeItem("token");
     setToken(null);
@@ -152,8 +193,69 @@ function Dashboard({ setToken, toggleTheme }) {
   });
 
   const filteredJournals = journals.filter((j) =>
-    j.entry_text?.toLowerCase().includes(journalSearch.toLowerCase())
+    (j.entry_text || '').toLowerCase().includes(journalSearch.toLowerCase())
   );
+
+  const exportData = () => {
+    let csv = 'Type,Date,Content\n';
+    journals.forEach(j => {
+      csv += `Journal,${j.entry_date},"${(j.entry_text || '').replace(/"/g, '""')}"\n`;
+    });
+    moods.forEach(m => {
+      csv += `Mood,${m.mood_date},${moodLabel[m.mood_level]}\n`;
+    });
+    gratitudeHistory.forEach(g => {
+      const items = [g.gratitude_1, g.gratitude_2, g.gratitude_3].filter(Boolean).join('; ');
+      csv += `Gratitude,${g.entry_date},"${items}"\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mirrortalk-export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification('📥 Data exported');
+  };
+
+  const journalPrompts = [
+    "What made you smile today?",
+    "What's one thing you're grateful for right now?",
+    "How did your body feel today?",
+    "What's something you learned recently?",
+    "Describe a moment of peace from today.",
+    "What would you tell your past self?",
+    "What are you looking forward to?",
+  ];
+  const todayPrompt = journalPrompts[new Date().getDate() % journalPrompts.length];
+
+  const calculateStreak = () => {
+    if (!journals.length) return 0;
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    const dates = [...new Set(journals.map(j => j.entry_date?.split('T')[0]))].sort().reverse();
+    let streak = 0;
+    let checkDate = new Date(today);
+    for (const d of dates) {
+      const entryDate = new Date(d + 'T00:00:00');
+      const diff = Math.round((checkDate - entryDate) / (1000*60*60*24));
+      if (diff <= 1) { streak++; checkDate = entryDate; }
+      else break;
+    }
+    return streak;
+  };
+  const streak = calculateStreak();
+
+  const dailyQuotes = [
+    { text: "Almost everything will work again if you unplug it for a few minutes, including you.", author: "Anne Lamott" },
+    { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+    { text: "You don't have to control your thoughts. You just have to stop letting them control you.", author: "Dan Millman" },
+    { text: "Be gentle with yourself. You're doing the best you can.", author: "Unknown" },
+    { text: "Feelings are just visitors. Let them come and go.", author: "Mooji" },
+    { text: "Self-care is not selfish. You cannot serve from an empty vessel.", author: "Eleanor Brown" },
+    { text: "The present moment is filled with joy and happiness. If you are attentive, you will see it.", author: "Thich Nhat Hanh" },
+  ];
+  const todayQuote = dailyQuotes[Math.floor(Date.now() / 86400000) % dailyQuotes.length];
 
   return (
     <div className="dashboard-shell">
@@ -168,8 +270,23 @@ function Dashboard({ setToken, toggleTheme }) {
         />
       )}
 
+      {/* Edit Profile Modal */}
+      {showProfileModal && (
+        <ProfileModal
+          profile={profile}
+          onSave={(updated) => {
+            setProfile(updated);
+            localStorage.setItem('mirrorTalkProfile', JSON.stringify(updated));
+            setShowProfileModal(false);
+            showNotification('✅ Profile updated');
+          }}
+          onCancel={() => setShowProfileModal(false)}
+        />
+      )}
+
       {/* SIDEBAR */}
-      <aside className="sidebar">
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+      <aside className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-brand">
           <span className="sidebar-brand-name">MirrorTalk</span>
           <span className="sidebar-brand-sub">a quiet space</span>
@@ -177,44 +294,70 @@ function Dashboard({ setToken, toggleTheme }) {
 
         <nav className="sidebar-nav">
           <span className="nav-section-label">Reflect</span>
-          <button className={`nav-item ${activeTab === "today" ? "active" : ""}`} onClick={() => setActiveTab("today")}>
+          <button className={`nav-item ${activeTab === "today" ? "active" : ""}`} onClick={() => { setActiveTab("today"); setSidebarOpen(false); }}>
             <span className="nav-icon">✏️</span> Today
           </button>
-          <button className={`nav-item ${activeTab === "profile" ? "active" : ""}`} onClick={() => setActiveTab("profile")}>
+          <button className={`nav-item ${activeTab === "profile" ? "active" : ""}`} onClick={() => { setActiveTab("profile"); setSidebarOpen(false); }}>
             <span className="nav-icon">📖</span> History
           </button>
 
           <span className="nav-section-label">Insights</span>
-          <button className={`nav-item ${activeTab === "trends" ? "active" : ""}`} onClick={() => setActiveTab("trends")}>
+          <button className={`nav-item ${activeTab === "trends" ? "active" : ""}`} onClick={() => { setActiveTab("trends"); setSidebarOpen(false); }}>
             <span className="nav-icon">📈</span> Mood trends
           </button>
-          <button className={`nav-item ${activeTab === "gratitude" ? "active" : ""}`} onClick={() => setActiveTab("gratitude")}>
+          <button className={`nav-item ${activeTab === "gratitude" ? "active" : ""}`} onClick={() => { setActiveTab("gratitude"); setSidebarOpen(false); }}>
             <span className="nav-icon">🙏</span> Gratitude
           </button>
         </nav>
 
         <div className="sidebar-footer">
-          <div className="sidebar-avatar">S</div>
-          <div className="sidebar-user-info">
-            <span className="sidebar-user-name">Shivangi</span>
-            <span className="sidebar-user-role">NIT Bhopal</span>
+          <div className="sidebar-user-trigger" onClick={() => setShowUserMenu(!showUserMenu)}>
+            <div className="sidebar-avatar">{profile.name.charAt(0).toUpperCase()}</div>
+            <div className="sidebar-user-info">
+              <span className="sidebar-user-name">{profile.name}</span>
+              <span className="sidebar-user-role">{profile.bio}</span>
+            </div>
+            <span className="user-menu-arrow">{showUserMenu ? '▴' : '▾'}</span>
           </div>
-          <button className="sidebar-icon-btn" onClick={toggleTheme} title="Toggle theme">🌙</button>
-          <button className="sidebar-icon-btn" onClick={logout} title="Logout">⎋</button>
+          {showUserMenu && (
+            <div className="user-menu">
+              <button className="user-menu-item" onClick={() => { setShowProfileModal(true); setShowUserMenu(false); }}>
+                <span>✏️</span> Edit Profile
+              </button>
+              <button className="user-menu-item" onClick={() => { toggleTheme(); setShowUserMenu(false); }}>
+                <span>🌙</span> Toggle Theme
+              </button>
+              <div className="user-menu-divider" />
+              <button className="user-menu-item user-menu-logout" onClick={logout}>
+                <span>🚪</span> Logout
+              </button>
+            </div>
+          )}
         </div>
       </aside>
 
       {/* MAIN */}
       <main className="dashboard-main">
+        <button className="hamburger-btn" onClick={() => setSidebarOpen(!sidebarOpen)}>☰</button>
         <div className="dash-topbar">
           <div>
             <p className="dash-date">{todayStr}</p>
             <h1 className="dash-greeting">{greeting} 🌿</h1>
+            <p className="daily-quote">✨ "{todayQuote.text}" — {todayQuote.author}</p>
           </div>
+          <button className="export-btn" onClick={exportData} title="Export your data">📥 Export</button>
         </div>
 
-        {/* STAT CARDS */}
-        <div className="stat-grid">
+        {loading ? (
+          <div className="loading-container">
+            <div className="skeleton-card"><div className="skeleton-line wide"></div><div className="skeleton-line"></div><div className="skeleton-line short"></div></div>
+            <div className="skeleton-card"><div className="skeleton-line wide"></div><div className="skeleton-line"></div></div>
+          </div>
+        ) : (
+          <>
+            {/* STAT CARDS */}
+            {streak > 0 && <div className="streak-badge">🔥 {streak} day{streak > 1 ? 's' : ''} of reflection</div>}
+            <div className="stat-grid">
           <div className="stat-card">
             <span className="stat-label">This week</span>
             <span className="stat-num">{summary?.total_days ?? "—"}</span>
@@ -247,6 +390,7 @@ function Dashboard({ setToken, toggleTheme }) {
             <div className="dash-card journal-card">
               <p className="journal-date-label">{todayStr}</p>
               <h2 className="journal-heading">How are you feeling right now?</h2>
+              {!entry && <p className="journal-prompt">💭 {todayPrompt}</p>}
               <form onSubmit={saveJournal}>
                 <textarea
                   className="journal-textarea"
@@ -272,31 +416,53 @@ function Dashboard({ setToken, toggleTheme }) {
                     key={m}
                     type="button"
                     className={`mood-pill ${mood === m ? "active" : ""}`}
-                    onClick={() => { setMood(m); setMoodChanged(true); }}
+                    onClick={async () => {
+                      setMood(m);
+                      try {
+                        await addMood({ mood_level: m, mood_date: new Date().toISOString().split("T")[0] });
+                        setMoods(handleApiResponse(await getMoods()));
+                        setSummary(await getWeeklyMoodSummary());
+                        showNotification("😊 Mood saved");
+                      } catch {
+                        showNotification("❌ Failed to save mood");
+                      }
+                    }}
                   >
                     <span className="mood-emoji-big">{moodMap[m]}</span>
                     <span className="mood-pill-label">{moodLabel[m]}</span>
                   </button>
                 ))}
               </div>
-              {moodChanged && (
-                <button className="btn-secondary" onClick={async () => { await saveMood(); setMoodChanged(false); }}>
-                  Save mood
-                </button>
-              )}
             </div>
 
             <div className="dash-card">
               <h2 className="card-title">Gratitude</h2>
               <p className="card-sub">Even one small thing is enough.</p>
-              <div className="gratitude-inputs">
-                <input className="grat-input" placeholder="Something kind" value={g1} onChange={(e) => setG1(e.target.value)} />
-                <input className="grat-input" placeholder="Something simple" value={g2} onChange={(e) => setG2(e.target.value)} />
-                <input className="grat-input" placeholder="Something steady" value={g3} onChange={(e) => setG3(e.target.value)} />
-              </div>
-              {(g1 || g2 || g3) && (
-                <button className="btn-secondary" onClick={saveGratitudeEntry}>Save gratitude</button>
-              )}
+              <form onSubmit={(e) => { e.preventDefault(); saveGratitudeEntry(); }}>
+                <div className="gratitude-inputs">
+                  <input
+                    className="grat-input"
+                    placeholder="Something kind"
+                    value={g1}
+                    onChange={(e) => setG1(e.target.value)}
+                  />
+                  <input
+                    className="grat-input"
+                    placeholder="Something simple"
+                    value={g2}
+                    onChange={(e) => setG2(e.target.value)}
+                  />
+                  <input
+                    className="grat-input"
+                    placeholder="Something steady"
+                    value={g3}
+                    onChange={(e) => setG3(e.target.value)}
+                  />
+                </div>
+                {(g1 || g2 || g3) && (
+                  <button type="submit" className="btn-secondary">Save gratitude</button>
+                )}
+              </form>
             </div>
           </div>
         )}
@@ -470,8 +636,6 @@ function Dashboard({ setToken, toggleTheme }) {
               ) : (
                 <div className="gratitude-history">
                   {gratitudeHistory.map((g, i) => {
-  console.log("GRATITUDE:", g);
-
   return (
     <div key={g.id ?? i} className="grat-entry">
       <span className="grat-entry-date">
@@ -512,6 +676,8 @@ function Dashboard({ setToken, toggleTheme }) {
               )}
             </div>
           </div>
+        )}
+          </>
         )}
       </main>
     </div>
