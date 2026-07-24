@@ -1,4 +1,9 @@
-const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+const rawApiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+let cleanUrl = rawApiUrl.trim().replace(/\/+$/, "");
+if (!cleanUrl.endsWith("/api")) {
+  cleanUrl = `${cleanUrl}/api`;
+}
+const API_URL = cleanUrl;
 
 /* ================= AUTH ================= */
 
