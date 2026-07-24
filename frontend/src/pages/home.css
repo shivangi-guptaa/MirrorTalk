@@ -10,10 +10,9 @@
 /* =========================
    LEFT PANEL
 ========================= */
-
 .home-left {
   width: 55%;
-  background: #1a2e1a;
+  background: #1E3524;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -38,7 +37,7 @@
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 3px;
-  background: linear-gradient(90deg, #86c853, #3b6d11, #86c853);
+  background: linear-gradient(90deg, #A8D5B5, #4A7C59, #A8D5B5);
   background-size: 200% auto;
   animation: shimmer 3s linear infinite;
   z-index: 2;
@@ -67,7 +66,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: #86c853;
+  background: #A8D5B5;
   flex-shrink: 0;
   animation: dotPulse 2.5s ease-in-out infinite;
 }
@@ -97,7 +96,7 @@
 
 .home-hero-sub {
   font-size: 14.5px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.7);
   line-height: 1.7;
   margin-top: 12px;
 }
@@ -141,21 +140,21 @@
 
 .home-feature-item:hover .home-feature-icon {
   transform: translateY(-3px);
-  background: rgba(134, 200, 83, 0.15);
+  background: rgba(168, 213, 181, 0.2);
 }
 
 .home-feature-text {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.85);
   line-height: 1.4;
 }
 
 /* Left footer */
 .home-left-footer {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.4);
   padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
   opacity: 0;
   animation: fadeUp 0.5s 0.9s ease forwards;
 }
@@ -166,7 +165,7 @@
 
 .home-right {
   flex: 1;
-  background: #f7f6f3;
+  background: #F9F8F3;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -187,7 +186,7 @@
 .home-cta-title {
   font-size: 28px;
   font-weight: 600;
-  color: #111;
+  color: #2D3732;
   font-family: "Poppins", sans-serif;
   letter-spacing: -0.3px;
   margin-bottom: 10px;
@@ -197,7 +196,7 @@
 
 .home-cta-sub {
   font-size: 14px;
-  color: #6b7280;
+  color: #78867D;
   line-height: 1.7;
   margin-bottom: 28px;
 }
@@ -213,7 +212,7 @@
 
 .home-cta-points li {
   font-size: 14px;
-  color: #374151;
+  color: #4B5851;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -225,25 +224,22 @@
   width: 100%;
   padding: 14px;
   border-radius: 12px;
-  background: #3b6d11;
+  background: #4A7C59;
   color: white;
   font-size: 15px;
   font-weight: 500;
   border: none;
   cursor: pointer;
   font-family: "Inter", sans-serif;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   gap: 8px;
+  box-shadow: 0 4px 14px rgba(74, 124, 89, 0.22);
   transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
-  animation: btnPulse 2.5s 1.8s ease-in-out infinite;
 }
 
 .home-cta-btn:hover {
-  background: #2f5a0d;
-  transform: scale(1.02);
-  box-shadow: 0 4px 16px rgba(59, 109, 17, 0.25);
+  background: #3B6447;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(74, 124, 89, 0.3);
 }
 
 .home-cta-btn:active { transform: scale(0.98); }

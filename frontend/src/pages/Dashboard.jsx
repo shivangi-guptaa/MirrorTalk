@@ -10,10 +10,17 @@ import {
   deleteJournal,
   deleteMood,
   deleteGratitude,
+  deleteAccount,
+  getTodos,
+  createTodo,
+  toggleTodo,
+  deleteTodo as deleteTodoApi,
 } from "../services/api";
 import { useNavigate } from "react-router-dom";
 import EmptyState from "../components/EmptyState";
 import MoodTrendGraph from "../components/MoodTrendGraph";
+import MoodHeatmap from "../components/MoodHeatmap";
+import ActivityBarChart from "../components/ActivityBarChart";
 import "../index.css";
 import "../App.css";
 
@@ -24,21 +31,139 @@ const moodLabel = { 1: "Very low", 2: "Low", 3: "Neutral", 4: "Good", 5: "Very g
 function ProfileModal({ profile, onSave, onCancel }) {
   const [name, setName] = useState(profile.name);
   const [bio, setBio] = useState(profile.bio);
+  const [avatar, setAvatar] = useState(profile.avatar || null);
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 3 * 1024 * 1024) {
+        alert("Please select an image smaller than 3MB.");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => setAvatar(reader.result);
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setAvatar(null);
+  };
+
   return (
-    <div className="modal-overlay" onClick={onCancel}>
+    <div className="modal-backdrop" onClick={onCancel}>
       <div className="modal-box profile-modal" onClick={(e) => e.stopPropagation()}>
         <h3 className="profile-modal-title">Edit Profile</h3>
-        <div className="profile-modal-avatar">{name.charAt(0).toUpperCase()}</div>
-        <div className="profile-form">
+
+        <div className="profile-avatar-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+          <div
+            className="profile-avatar-upload"
+            title="Click to change photo"
+            onClick={() => document.getElementById("profile-file-input")?.click()}
+            style={{ cursor: 'pointer' }}
+          >
+            {avatar
+              ? <img src={avatar} alt="Profile" className="profile-modal-avatar-img" />
+              : <div className="profile-modal-avatar">{(name || "F").charAt(0).toUpperCase()}</div>
+            }
+            <div className="profile-avatar-overlay">📷</div>
+          </div>
+
+          <input
+            id="profile-file-input"
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarChange}
+            style={{ display: "none" }}
+          />
+
+          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+            <button
+              type="button"
+              className="btn-secondary"
+              style={{ marginTop: 0, padding: '4px 12px', fontSize: '12px' }}
+              onClick={() => document.getElementById("profile-file-input")?.click()}
+            >
+              {avatar ? "📷 Change Photo" : "📷 Upload Photo"}
+            </button>
+            {avatar && (
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ marginTop: 0, padding: '4px 12px', fontSize: '12px', color: '#dc2626', borderColor: 'rgba(220, 38, 38, 0.2)' }}
+                onClick={handleRemovePhoto}
+              >
+                🗑️ Remove Photo
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="profile-form" style={{ marginTop: 16 }}>
           <label className="profile-label">Display Name</label>
-          <input className="profile-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
+          <input className="profile-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="What should we call you?" />
+
           <label className="profile-label">Bio</label>
-          <input className="profile-input" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="e.g. NIT Bhopal" />
+          <input className="profile-input" value={bio} onChange={(e) => setBio(e.target.value)} placeholder="e.g. Student at NIT Bhopal / Exploring mindfulness" />
+
+          <div className="modal-actions" style={{ marginTop: 18 }}>
+            <button className="btn-secondary" onClick={onCancel}>Cancel</button>
+            <button className="btn-primary profile-save-btn" onClick={() => onSave({ name: name.trim() || 'Friend', bio: bio.trim(), avatar })}>
+              Save Profile
+            </button>
+          </div>
         </div>
-        <div className="modal-actions">
-          <button className="modal-btn-cancel" onClick={onCancel}>Cancel</button>
-          <button className="btn-primary profile-save-btn" onClick={() => onSave({ name: name.trim() || 'User', bio: bio.trim() })}>Save</button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Welcome Onboarding Modal for New Joiners ── */
+function WelcomeModal({ onSave }) {
+  const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onSave({ name: name.trim() || "Friend", bio: bio.trim() });
+  };
+
+  return (
+    <div className="modal-backdrop">
+      <div className="modal-box profile-modal" onClick={(e) => e.stopPropagation()}>
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <span style={{ fontSize: 36 }}>🌿</span>
+          <h2 style={{ fontSize: 22, fontWeight: 600, marginTop: 8, color: "var(--text)" }}>
+            Welcome to MirrorTalk!
+          </h2>
+          <p style={{ fontSize: 13, color: "var(--muted)", marginTop: 4 }}>
+            Let's set up your profile to make this quiet space feel like home.
+          </p>
         </div>
+
+        <form onSubmit={handleSubmit} className="profile-form">
+          <label className="profile-label">What should we call you?</label>
+          <input
+            className="profile-input"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Alex, Sam..."
+            required
+            autoFocus
+          />
+
+          <label className="profile-label">Bio or Intention (Optional)</label>
+          <input
+            className="profile-input"
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            placeholder="e.g. Student / Reflecting & growing daily"
+          />
+
+          <button type="submit" className="btn-primary" style={{ width: "100%", marginTop: 16 }}>
+            Get Started →
+          </button>
+        </form>
       </div>
     </div>
   );
@@ -59,17 +184,55 @@ function ConfirmModal({ message, onConfirm, onCancel }) {
   );
 }
 
-function Dashboard({ setToken, toggleTheme }) {
+function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   const navigate = useNavigate();
+
+  const getProfileStorageKey = () => {
+    if (!token) return "mirrorTalkProfile_guest";
+    try {
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      );
+      const parsed = JSON.parse(jsonPayload);
+      return `mirrorTalkProfile_${parsed.id || parsed.userId || 'guest'}`;
+    } catch {
+      return "mirrorTalkProfile_guest";
+    }
+  };
+
+  const profileKey = getProfileStorageKey();
+
   const [activeTab, setActiveTab] = useState("today");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profile, setProfile] = useState(() => {
-    const saved = localStorage.getItem('mirrorTalkProfile');
-    return saved ? JSON.parse(saved) : { name: 'Shivangi', bio: 'NIT Bhopal' };
+    const saved = localStorage.getItem(profileKey);
+    return saved ? JSON.parse(saved) : { name: "Friend", bio: "Click to edit profile", avatar: null, onboarded: false };
   });
+
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    const saved = localStorage.getItem(profileKey);
+    return !saved;
+  });
+
+  useEffect(() => {
+    const saved = localStorage.getItem(profileKey);
+    if (saved) {
+      setProfile(JSON.parse(saved));
+      setShowOnboarding(false);
+    } else {
+      setProfile({ name: "Friend", bio: "Click to edit profile", avatar: null, onboarded: false });
+      setShowOnboarding(true);
+    }
+  }, [profileKey]);
+
+  const [loading, setLoading] = useState(true);
 
   const [entry, setEntry] = useState("");
   const [mood, setMood] = useState(3);
@@ -79,6 +242,8 @@ function Dashboard({ setToken, toggleTheme }) {
   const [summary, setSummary] = useState(null);
   const [gratitudeHistory, setGratitudeHistory] = useState([]);
   const [journals, setJournals] = useState([]);
+  const [todos, setTodos] = useState([]);
+  const [newTodoText, setNewTodoText] = useState("");
 
   const [g1, setG1] = useState("");
   const [g2, setG2] = useState("");
@@ -86,9 +251,30 @@ function Dashboard({ setToken, toggleTheme }) {
 
   const [journalSearch, setJournalSearch] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+
+  const getLocalDateString = (d = new Date()) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const parseLocalDate = (dateStr) => {
+    if (!dateStr) return new Date();
+    const parts = dateStr.split('T')[0].split('-');
+    if (parts.length < 3) return new Date(dateStr);
+    return new Date(parts[0], parts[1] - 1, parts[2]);
+  };
 
   const handleApiResponse = (res) => {
-    if (res?.message === 'Token is not valid' || res?.message === 'No token, authorization denied') {
+    const isAuthError =
+      res?.message === 'Token is not valid' ||
+      res?.message === 'No token, authorization denied' ||
+      res?.message === 'No token, access denied' ||
+      res?.message === 'Invalid token';
+
+    if (isAuthError) {
       localStorage.removeItem('token');
       setToken(null);
       navigate('/auth');
@@ -104,12 +290,14 @@ function Dashboard({ setToken, toggleTheme }) {
     setTimeout(() => setNotification(""), 2500);
   };
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     Promise.all([
       getMoods().then((res) => setMoods(handleApiResponse(res))),
       getWeeklyMoodSummary().then(setSummary),
       getGratitudeHistory().then((res) => setGratitudeHistory(handleApiResponse(res))),
-      getJournals().then((res) => setJournals(handleApiResponse(res)))
+      getJournals().then((res) => setJournals(handleApiResponse(res))),
+      getTodos().then((res) => setTodos(handleApiResponse(res)))
     ])
     .catch(console.error)
     .finally(() => setLoading(false));
@@ -121,7 +309,7 @@ function Dashboard({ setToken, toggleTheme }) {
     try {
       await createJournal({
         entry_text: entry,
-        entry_date: new Date().toISOString().split("T")[0],
+        entry_date: getLocalDateString(),
       });
       setEntry("");
       setJournals(handleApiResponse(await getJournals()));
@@ -132,13 +320,16 @@ function Dashboard({ setToken, toggleTheme }) {
   };
 
   const saveGratitudeEntry = async () => {
-    if (!g1 && !g2 && !g3) return;
+    const v1 = g1.trim();
+    const v2 = g2.trim();
+    const v3 = g3.trim();
+    if (!v1 && !v2 && !v3) return;
     try {
       await saveGratitude({
-        gratitude_1: g1 || null,
-        gratitude_2: g2 || null,
-        gratitude_3: g3 || null,
-        entry_date: new Date().toISOString().split("T")[0],
+        gratitude_1: v1 || null,
+        gratitude_2: v2 || null,
+        gratitude_3: v3 || null,
+        entry_date: getLocalDateString(),
       });
       setG1(""); setG2(""); setG3("");
       setGratitudeHistory(handleApiResponse(await getGratitudeHistory()));
@@ -147,6 +338,50 @@ function Dashboard({ setToken, toggleTheme }) {
       showNotification("❌ Failed to save gratitude");
     }
   };
+
+  const handleAddTodo = async (e) => {
+    e.preventDefault();
+    if (!newTodoText.trim()) return;
+    try {
+      const res = await createTodo({
+        task_text: newTodoText.trim(),
+        task_date: getLocalDateString()
+      });
+      if (res.success) {
+        showNotification("✅ Task added");
+        setNewTodoText("");
+        getTodos().then((r) => setTodos(handleApiResponse(r)));
+      }
+    } catch {
+      showNotification("Failed to add task");
+    }
+  };
+
+  const handleToggleTodo = async (id) => {
+    try {
+      await toggleTodo(id);
+      getTodos().then((r) => setTodos(handleApiResponse(r)));
+    } catch {
+      showNotification("Failed to update task");
+    }
+  };
+
+  const handleDeleteTodo = async (id) => {
+    try {
+      await deleteTodoApi(id);
+      getTodos().then((r) => setTodos(handleApiResponse(r)));
+      showNotification("🗑️ Task deleted");
+    } catch {
+      showNotification("Failed to delete task");
+    }
+  };
+
+  const todayDateStr = getLocalDateString();
+  const todayMoods = moods.filter(m => m.mood_date && m.mood_date.split('T')[0] === todayDateStr);
+  const todayJournals = journals.filter(j => j.entry_date && j.entry_date.split('T')[0] === todayDateStr);
+  const todayGratitude = gratitudeHistory.filter(g => g.entry_date && g.entry_date.split('T')[0] === todayDateStr);
+  const todayTasks = todos.filter(t => t.task_date && t.task_date.split('T')[0] === todayDateStr);
+  const todayCompletedTasks = todayTasks.filter(t => t.completed);
 
   /* ── Delete handlers ── */
   const askDelete = (type, id, label) => {
@@ -171,7 +406,7 @@ function Dashboard({ setToken, toggleTheme }) {
       } else if (type === "gratitude") {
         await deleteGratitude(id);
         setGratitudeHistory(handleApiResponse(await getGratitudeHistory()));
-        showNotification("🗑️ Gratitude entry deleted");
+        showNotification("🗑️ Gratitude deleted");
       }
     } catch {
       showNotification("❌ Failed to delete");
@@ -182,6 +417,22 @@ function Dashboard({ setToken, toggleTheme }) {
     localStorage.removeItem("token");
     setToken(null);
     navigate("/auth");
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      const res = await deleteAccount();
+      if (res?.success) {
+        localStorage.clear();
+        setToken(null);
+        navigate("/auth");
+      } else {
+        showNotification(res?.message || "Failed to delete account");
+      }
+    } catch (err) {
+      console.error(err);
+      showNotification("Failed to delete account");
+    }
   };
 
   const greeting =
@@ -212,22 +463,72 @@ function Dashboard({ setToken, toggleTheme }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `mirrortalk-export-${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `mirrortalk-export-${getLocalDateString()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     showNotification('📥 Data exported');
   };
 
+  const downloadSingleJournal = (journal) => {
+    const formattedDate = parseLocalDate(journal.entry_date).toLocaleDateString(undefined, {
+      weekday: "long", day: "numeric", month: "long", year: "numeric",
+    });
+    const formattedTime = journal.created_at
+      ? new Date(journal.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
+      : "";
+
+    const wordCount = journal.entry_text?.trim().split(/\s+/).filter(Boolean).length || 0;
+
+    const content = `MirrorTalk Reflection Entry
+--------------------------------------------------
+Date: ${formattedDate} ${formattedTime ? `· ${formattedTime}` : ''}
+Word Count: ${wordCount} words
+
+${journal.entry_text}
+--------------------------------------------------
+`;
+
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `journal-entry-${journal.entry_date}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showNotification('📄 Entry downloaded');
+  };
+
+  const copySingleJournal = (text) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    showNotification('📋 Copied to clipboard');
+  };
+
   const journalPrompts = [
     "What made you smile today?",
     "What's one thing you're grateful for right now?",
-    "How did your body feel today?",
-    "What's something you learned recently?",
-    "Describe a moment of peace from today.",
-    "What would you tell your past self?",
-    "What are you looking forward to?",
+    "How did your body and mind feel today?",
+    "What's something inspiring you learned recently?",
+    "Describe a moment of peace or quiet from today.",
+    "What would you tell your past self about today?",
+    "What are you most looking forward to tomorrow?",
+    "What was a small challenge you faced today and how did you handle it?",
+    "Name three things that brought you comfort today.",
+    "What is a thought or feeling you want to let go of?",
+    "Who is someone who made your day a little brighter today?",
+    "If today was a chapter in a book, what would the title be?",
+    "What is one gentle promise you can make to yourself for tomorrow?",
+    "What made you feel proud or accomplished today?",
+    "What is something simple that made you pause and appreciate life today?"
   ];
-  const todayPrompt = journalPrompts[new Date().getDate() % journalPrompts.length];
+
+  const [promptIndex, setPromptIndex] = useState(() => new Date().getDate() % journalPrompts.length);
+
+  const getNextPrompt = () => {
+    setPromptIndex((prev) => (prev + 1) % journalPrompts.length);
+  };
+
+  const activePrompt = journalPrompts[promptIndex];
 
   const calculateStreak = () => {
     if (!journals.length) return 0;
@@ -270,13 +571,35 @@ function Dashboard({ setToken, toggleTheme }) {
         />
       )}
 
+      {/* Delete Account Modal */}
+      {showDeleteAccountModal && (
+        <ConfirmModal
+          message="Are you sure you want to permanently delete your account? All your journals, mood logs, and gratitude entries will be erased forever."
+          onConfirm={handleDeleteAccount}
+          onCancel={() => setShowDeleteAccountModal(false)}
+        />
+      )}
+
+      {/* Welcome / Onboarding Modal — shows for new users */}
+      {showOnboarding && (
+        <WelcomeModal
+          onSave={(info) => {
+            const updated = { ...profile, ...info, onboarded: true };
+            setProfile(updated);
+            localStorage.setItem(profileKey, JSON.stringify(updated));
+            setShowOnboarding(false);
+          }}
+        />
+      )}
+
       {/* Edit Profile Modal */}
       {showProfileModal && (
         <ProfileModal
           profile={profile}
           onSave={(updated) => {
-            setProfile(updated);
-            localStorage.setItem('mirrorTalkProfile', JSON.stringify(updated));
+            const withOnboarded = { ...updated, onboarded: true };
+            setProfile(withOnboarded);
+            localStorage.setItem(profileKey, JSON.stringify(withOnboarded));
             setShowProfileModal(false);
             showNotification('✅ Profile updated');
           }}
@@ -297,6 +620,9 @@ function Dashboard({ setToken, toggleTheme }) {
           <button className={`nav-item ${activeTab === "today" ? "active" : ""}`} onClick={() => { setActiveTab("today"); setSidebarOpen(false); }}>
             <span className="nav-icon">✏️</span> Today
           </button>
+          <button className={`nav-item ${activeTab === "todos" ? "active" : ""}`} onClick={() => { setActiveTab("todos"); setSidebarOpen(false); }}>
+            <span className="nav-icon">✅</span> Daily Tasks
+          </button>
           <button className={`nav-item ${activeTab === "profile" ? "active" : ""}`} onClick={() => { setActiveTab("profile"); setSidebarOpen(false); }}>
             <span className="nav-icon">📖</span> History
           </button>
@@ -312,10 +638,13 @@ function Dashboard({ setToken, toggleTheme }) {
 
         <div className="sidebar-footer">
           <div className="sidebar-user-trigger" onClick={() => setShowUserMenu(!showUserMenu)}>
-            <div className="sidebar-avatar">{profile.name.charAt(0).toUpperCase()}</div>
+            {profile.avatar
+              ? <img src={profile.avatar} alt="avatar" className="sidebar-avatar sidebar-avatar-img" />
+              : <div className="sidebar-avatar">{(profile.name || 'User').charAt(0).toUpperCase()}</div>
+            }
             <div className="sidebar-user-info">
-              <span className="sidebar-user-name">{profile.name}</span>
-              <span className="sidebar-user-role">{profile.bio}</span>
+              <span className="sidebar-user-name">{profile.name || 'Set profile'}</span>
+              <span className="sidebar-user-role">{profile.bio || 'Click to edit'}</span>
             </div>
             <span className="user-menu-arrow">{showUserMenu ? '▴' : '▾'}</span>
           </div>
@@ -324,12 +653,27 @@ function Dashboard({ setToken, toggleTheme }) {
               <button className="user-menu-item" onClick={() => { setShowProfileModal(true); setShowUserMenu(false); }}>
                 <span>✏️</span> Edit Profile
               </button>
-              <button className="user-menu-item" onClick={() => { toggleTheme(); setShowUserMenu(false); }}>
-                <span>🌙</span> Toggle Theme
-              </button>
+              <div className="user-menu-item user-menu-theme">
+                <span>{darkMode ? '🌙' : '☀️'}</span>
+                <span className="user-menu-theme-label">Dark Mode</span>
+                <button
+                  className={`theme-toggle-switch ${darkMode ? 'on' : ''}`}
+                  onClick={(e) => { e.stopPropagation(); toggleTheme(); }}
+                  aria-label="Toggle dark mode"
+                >
+                  <span className="theme-toggle-knob" />
+                </button>
+              </div>
               <div className="user-menu-divider" />
               <button className="user-menu-item user-menu-logout" onClick={logout}>
                 <span>🚪</span> Logout
+              </button>
+              <button
+                className="user-menu-item user-menu-logout"
+                style={{ color: '#ef4444' }}
+                onClick={() => { setShowDeleteAccountModal(true); setShowUserMenu(false); }}
+              >
+                <span>⚠️</span> Delete Account
               </button>
             </div>
           )}
@@ -345,7 +689,6 @@ function Dashboard({ setToken, toggleTheme }) {
             <h1 className="dash-greeting">{greeting} 🌿</h1>
             <p className="daily-quote">✨ "{todayQuote.text}" — {todayQuote.author}</p>
           </div>
-          <button className="export-btn" onClick={exportData} title="Export your data">📥 Export</button>
         </div>
 
         {loading ? (
@@ -386,11 +729,22 @@ function Dashboard({ setToken, toggleTheme }) {
 
         {/* TODAY TAB */}
         {activeTab === "today" && (
-          <div className="tab-content">
+          <div className="tab-content" key="today">
             <div className="dash-card journal-card">
-              <p className="journal-date-label">{todayStr}</p>
-              <h2 className="journal-heading">How are you feeling right now?</h2>
-              {!entry && <p className="journal-prompt">💭 {todayPrompt}</p>}
+              {!entry && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, margin: '8px 0 12px', flexWrap: 'wrap' }}>
+                  <p className="journal-prompt" style={{ margin: 0, flex: 1 }}>💭 {activePrompt}</p>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ marginTop: 0, padding: '4px 10px', fontSize: '12px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4 }}
+                    onClick={getNextPrompt}
+                    title="Get another writing prompt"
+                  >
+                    🔄 New Prompt
+                  </button>
+                </div>
+              )}
               <form onSubmit={saveJournal}>
                 <textarea
                   className="journal-textarea"
@@ -419,7 +773,7 @@ function Dashboard({ setToken, toggleTheme }) {
                     onClick={async () => {
                       setMood(m);
                       try {
-                        await addMood({ mood_level: m, mood_date: new Date().toISOString().split("T")[0] });
+                        await addMood({ mood_level: m, mood_date: getLocalDateString() });
                         setMoods(handleApiResponse(await getMoods()));
                         setSummary(await getWeeklyMoodSummary());
                         showNotification("😊 Mood saved");
@@ -464,26 +818,192 @@ function Dashboard({ setToken, toggleTheme }) {
                 )}
               </form>
             </div>
+
+            {/* DAILY TASKS & INTENTIONS CARD */}
+            <div className="dash-card todo-card">
+              <div className="card-header-row">
+                <div>
+                  <h2 className="card-title">Daily Intentions & Tasks ✅</h2>
+                  <p className="card-sub">
+                    {todayTasks.length === 0
+                      ? "Set small, peaceful goals for your day."
+                      : `${todayCompletedTasks.length} of ${todayTasks.length} tasks completed`}
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleAddTodo} className="todo-input-form" style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+                <input
+                  className="grat-input"
+                  style={{ flex: 1 }}
+                  placeholder="Add a goal or intention for today..."
+                  value={newTodoText}
+                  onChange={(e) => setNewTodoText(e.target.value)}
+                />
+                <button type="submit" className="btn-primary" style={{ marginTop: 0, padding: '0 20px', whiteSpace: 'nowrap' }}>
+                  + Add Task
+                </button>
+              </form>
+
+              {todayTasks.length > 0 && (
+                <div className="todo-list-wrap" style={{ marginTop: 16 }}>
+                  {todayTasks.map((t) => (
+                    <div key={t.id} className={`todo-item-row ${t.completed ? "completed" : ""}`}>
+                      <label className="todo-label-wrap">
+                        <input
+                          type="checkbox"
+                          className="todo-checkbox"
+                          checked={Boolean(t.completed)}
+                          onChange={() => handleToggleTodo(t.id)}
+                        />
+                        <span className="todo-text-content">{t.task_text}</span>
+                      </label>
+                      <button
+                        className="delete-btn"
+                        title="Delete task"
+                        onClick={() => handleDeleteTodo(t.id)}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* REVIEW YOUR DAY TODAY CARD */}
+            <div className="dash-card review-day-card">
+              <div className="card-header-row">
+                <div>
+                  <h2 className="card-title">Review Your Day Today 🌙</h2>
+                  <p className="card-sub">Your reflection summary for {todayStr}</p>
+                </div>
+              </div>
+
+              <div className="review-stats-grid">
+                <div className="review-stat-box">
+                  <span className="review-stat-label">Mood Check-ins</span>
+                  <span className="review-stat-num">{todayMoods.length} check-ins</span>
+                  {todayMoods.length > 0 && (
+                    <div className="review-mood-timeline">
+                      {todayMoods.map((m, idx) => (
+                        <span key={idx} className="review-mood-badge">
+                          {moodMap[m.mood_level]} {moodLabel[m.mood_level]}
+                          {m.created_at && (
+                            <small className="review-time">
+                              {' · ' + new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </small>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="review-stat-box">
+                  <span className="review-stat-label">Journals Written</span>
+                  <span className="review-stat-num">{todayJournals.length} entries</span>
+                </div>
+
+                <div className="review-stat-box">
+                  <span className="review-stat-label">Gratitude Moments</span>
+                  <span className="review-stat-num">{todayGratitude.length} moments</span>
+                </div>
+
+                <div className="review-stat-box">
+                  <span className="review-stat-label">Daily Tasks Completed</span>
+                  <span className="review-stat-num">{todayCompletedTasks.length} / {todayTasks.length} tasks</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* DAILY TASKS TAB */}
+        {activeTab === "todos" && (
+          <div className="tab-content" key="todos">
+            <div className="dash-card todo-card">
+              <div className="card-header-row">
+                <div>
+                  <h2 className="card-title">Your Daily Tasks & Intentions ✅</h2>
+                  <p className="card-sub">
+                    {todos.length === 0
+                      ? "Keep track of small daily actions."
+                      : `${todos.filter(t => t.completed).length} of ${todos.length} total tasks completed`}
+                  </p>
+                </div>
+              </div>
+
+              <form onSubmit={handleAddTodo} className="todo-input-form" style={{ display: 'flex', gap: 10, marginTop: 14 }}>
+                <input
+                  className="grat-input"
+                  style={{ flex: 1 }}
+                  placeholder="What would you like to achieve today?"
+                  value={newTodoText}
+                  onChange={(e) => setNewTodoText(e.target.value)}
+                />
+                <button type="submit" className="btn-primary" style={{ marginTop: 0, padding: '0 20px', whiteSpace: 'nowrap' }}>
+                  + Add Task
+                </button>
+              </form>
+
+              {todos.length === 0 ? (
+                <EmptyState message="No tasks yet. Add your first intention above!" />
+              ) : (
+                <div className="todo-list-wrap" style={{ marginTop: 20 }}>
+                  {todos.map((t) => (
+                    <div key={t.id} className={`todo-item-row ${t.completed ? "completed" : ""}`}>
+                      <label className="todo-label-wrap">
+                        <input
+                          type="checkbox"
+                          className="todo-checkbox"
+                          checked={Boolean(t.completed)}
+                          onChange={() => handleToggleTodo(t.id)}
+                        />
+                        <span className="todo-text-content">{t.task_text}</span>
+                        <span className="todo-date-badge">
+                          {parseLocalDate(t.task_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                        </span>
+                      </label>
+                      <button
+                        className="delete-btn"
+                        title="Delete task"
+                        onClick={() => handleDeleteTodo(t.id)}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
         {/* HISTORY TAB */}
         {activeTab === "profile" && (
-          <div className="tab-content">
+          <div className="tab-content" key="profile">
             <div className="dash-card">
               <div className="card-header-row">
                 <div>
                   <h2 className="card-title">Your words</h2>
-                  <p className="card-sub">{journals.length} journal {journals.length === 1 ? "entry" : "entries"}</p>
+                  <p className="card-sub">
+                    {journals.length} journal {journals.length === 1 ? "entry" : "entries"} · Click any entry to copy or save as .txt 💡
+                  </p>
                 </div>
-                <div className="search-wrap">
-                  <span className="search-icon">🔍</span>
-                  <input
-                    className="search-input"
-                    placeholder="Search entries..."
-                    value={journalSearch}
-                    onChange={(e) => setJournalSearch(e.target.value)}
-                  />
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div className="search-wrap">
+                    <span className="search-icon">🔍</span>
+                    <input
+                      className="search-input"
+                      placeholder="Search entries..."
+                      value={journalSearch}
+                      onChange={(e) => setJournalSearch(e.target.value)}
+                    />
+                  </div>
+                  <button className="export-btn" onClick={exportData} title="Export all history to CSV">
+                    📥 Export All
+                  </button>
                 </div>
               </div>
 
@@ -496,30 +1016,58 @@ function Dashboard({ setToken, toggleTheme }) {
                       <summary className="entry-summary">
                         <div className="entry-summary-left">
                           <span className="entry-preview">
-                            {j.entry_text?.slice(0, 65)}{j.entry_text?.length > 65 ? "…" : ""}
+                            {j.entry_text?.slice(0, 80)}{j.entry_text?.length > 80 ? "…" : ""}
                           </span>
                           <span className="entry-date">
-                            {new Date(j.entry_date).toLocaleDateString(undefined, {
+                            {parseLocalDate(j.entry_date).toLocaleDateString(undefined, {
                               day: "numeric", month: "short", year: "numeric",
                             })}
+                            {j.created_at && (
+                              <span style={{ marginLeft: 6, opacity: 0.6 }}>
+                                · {new Date(j.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            )}
                           </span>
                         </div>
-                        <button
-                          className="delete-btn"
-                          title="Delete entry"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            askDelete("journal", j.id, j.entry_date);
-                          }}
-                        >
-                          🗑️
-                        </button>
+                        <div className="entry-summary-right">
+                          <span className="entry-expand-badge" title="Click to view full entry & save options">Read & Save ▾</span>
+                          <button
+                            className="delete-btn"
+                            title="Delete entry"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              askDelete("journal", j.id, j.date);
+                            }}
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       </summary>
                       <div className="entry-body">
                         <p className="entry-full-text">{j.entry_text}</p>
                         <div className="entry-body-meta">
-                          <span>{j.entry_text?.trim().split(/\s+/).filter(Boolean).length} words</span>
+                          <span className="word-count-badge">
+                            {j.entry_text?.trim().split(/\s+/).filter(Boolean).length} words
+                          </span>
+                          <div className="entry-action-pills">
+                            <button
+                              type="button"
+                              className="entry-pill-btn"
+                              title="Copy full text to clipboard"
+                              onClick={() => copySingleJournal(j.entry_text)}
+                            >
+                              📋 Copy Text
+                            </button>
+                            <button
+                              type="button"
+                              className="entry-pill-btn entry-pill-save"
+                              title="Download this entry as a .txt file"
+                              onClick={() => downloadSingleJournal(j)}
+                            >
+                              📄 Save as .txt
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </details>
@@ -542,7 +1090,7 @@ function Dashboard({ setToken, toggleTheme }) {
                       <div className="mood-log-info">
                         <span className="mood-log-label">{moodLabel[m.mood_level]}</span>
                         <span className="mood-log-date">
-                          {new Date(m.mood_date).toLocaleDateString(undefined, {
+                          {parseLocalDate(m.mood_date).toLocaleDateString(undefined, {
                             day: "numeric", month: "short", year: "numeric",
                           })}
                         </span>
@@ -564,7 +1112,7 @@ function Dashboard({ setToken, toggleTheme }) {
 
         {/* TRENDS TAB */}
    {activeTab === "trends" && (
-  <div className="tab-content">
+  <div className="tab-content" key="trends">
 
     <div className="analytics-grid">
       <div className="analytics-card">
@@ -576,9 +1124,14 @@ function Dashboard({ setToken, toggleTheme }) {
         <h3>Average Mood</h3>
         <p>
           {summary?.avg_mood
-            ? summary.avg_mood.toFixed(1)
-            : "-"}
+            ? `${parseFloat(summary.avg_mood).toFixed(1)} / 5`
+            : "—"}
         </p>
+        {summary?.avg_mood && (
+          <span style={{ fontSize: "13px", color: "var(--muted)", fontWeight: 500 }}>
+            {moodMap[Math.round(summary.avg_mood)]} {moodLabel[Math.round(summary.avg_mood)]}
+          </span>
+        )}
       </div>
 
       <div className="analytics-card">
@@ -617,17 +1170,28 @@ function Dashboard({ setToken, toggleTheme }) {
     </div>
 
     <div className="dash-card">
-      <h2 className="card-title">Patterns over time</h2>
-      <p className="card-sub">Your mood journey</p>
+      <h2 className="card-title">Mood Journey & Emotional Trends 📈</h2>
+      <p className="card-sub">Interactive visual trend of your mood progression over time</p>
       <MoodTrendGraph moods={moods} />
     </div>
 
+    <div className="dash-card">
+      <h2 className="card-title">7-Day Reflection Activity Breakdown 📊</h2>
+      <p className="card-sub">Daily comparison of Journals, Gratitude moments, and Tasks completed</p>
+      <ActivityBarChart journals={journals} gratitudeHistory={gratitudeHistory} todos={todos} />
+    </div>
+
+    <div className="dash-card">
+      <p className="card-title">15-Week Mood Consistency Calendar 🗓️</p>
+      <p className="card-sub">Visual frequency of your daily check-ins</p>
+      <MoodHeatmap moods={moods} />
+    </div>
   </div>
 )}
 
         {/* GRATITUDE TAB */}
         {activeTab === "gratitude" && (
-          <div className="tab-content">
+          <div className="tab-content" key="gratitude">
             <div className="dash-card">
               <h2 className="card-title">Moments you noticed</h2>
               <p className="card-sub">{gratitudeHistory.length} entries</p>

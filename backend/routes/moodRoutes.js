@@ -5,11 +5,11 @@ const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
 
 /* ======================
-   ADD / UPDATE DAILY MOOD
+   ADD MOOD ENTRY (Multiple allowed per day)
 ====================== */
 router.post("/", authMiddleware, async (req, res) => {
   const { mood_level, mood_date } = req.body;
-  const userId = req.user.id;
+  const userId = req.user.id || req.user.userId;
 
   if (!mood_level || mood_level < 1 || mood_level > 5) {
     return res.status(400).json({
@@ -26,29 +26,19 @@ router.post("/", authMiddleware, async (req, res) => {
 
     res.status(201).json({ message: "Mood added successfully" });
   } catch (err) {
-    if (err.code === "ER_DUP_ENTRY") {
-      await db.promise().query(
-        "UPDATE moods SET mood_level = ? WHERE user_id = ? AND mood_date = ?",
-        [mood_level, userId, mood_date]
-      );
-
-      return res.json({ message: "Mood updated for the day" });
-    }
-
     res.status(500).json({ error: err.message });
   }
 });
 
 /* ======================
    GET MOOD HISTORY
-   ✅ FIXED: added id to SELECT so frontend can delete by id
 ====================== */
 router.get("/", authMiddleware, async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user.id || req.user.userId;
 
   try {
     const [moods] = await db.promise().query(
-      "SELECT id, mood_level, mood_date FROM moods WHERE user_id = ? ORDER BY mood_date DESC",
+      "SELECT id, mood_level, mood_date, created_at FROM moods WHERE user_id = ? ORDER BY created_at DESC, id DESC",
       [userId]
     );
 
@@ -62,7 +52,7 @@ router.get("/", authMiddleware, async (req, res) => {
    WEEKLY MOOD SUMMARY
 ====================== */
 router.get("/weekly-summary", authMiddleware, async (req, res) => {
-  const userId = req.user.id;
+  const userId = req.user.id || req.user.userId;
 
   try {
     const [summary] = await db.promise().query(
@@ -90,7 +80,7 @@ router.get("/weekly-summary", authMiddleware, async (req, res) => {
 ====================== */
 router.delete("/:id", authMiddleware, async (req, res) => {
   const moodId = req.params.id;
-  const userId = req.user.id;
+  const userId = req.user.id || req.user.userId;
 
   try {
     const [result] = await db.promise().query(

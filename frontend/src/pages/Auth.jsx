@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Login from "./Login";
 import Register from "./Register";
+import ForgotPassword from "./ForgotPassword";
 import "./auth.css";
 
 const features = [
@@ -65,34 +66,52 @@ function Auth({ setToken }) {
           </div>
 
           <h2 className="auth-form-title">
-            {activeTab === "register" ? "Create your account" : "Welcome back"}
+            {activeTab === "register"
+              ? "Create your account"
+              : activeTab === "forgot"
+              ? "Reset password"
+              : "Welcome back"}
           </h2>
           <p className="auth-form-sub">
             {activeTab === "register"
               ? "Start your reflection journey today."
+              : activeTab === "forgot"
+              ? "Enter your email to recover access."
               : "Good to see you again."}
           </p>
 
-          {/* TOGGLE */}
-          <div className="auth-toggle">
-            <button
-              className={activeTab === "register" ? "active" : ""}
-              onClick={() => setActiveTab("register")}
-            >
-              Create account
-            </button>
-            <button
-              className={activeTab === "login" ? "active" : ""}
-              onClick={() => setActiveTab("login")}
-            >
-              Sign in
-            </button>
-          </div>
+          {/* TOGGLE — only show for register / login */}
+          {activeTab !== "forgot" && (
+            <div className="auth-toggle">
+              <button
+                className={activeTab === "register" ? "active" : ""}
+                onClick={() => setActiveTab("register")}
+              >
+                Create account
+              </button>
+              <button
+                className={activeTab === "login" ? "active" : ""}
+                onClick={() => setActiveTab("login")}
+              >
+                Sign in
+              </button>
+            </div>
+          )}
 
           {/* FORM */}
           <div className="auth-form-body">
-            {activeTab === "register" && <Register />}
-            {activeTab === "login" && <Login setToken={handleLogin} />}
+            {activeTab === "register" && (
+              <Register onSwitchToLogin={() => setActiveTab("login")} onLogin={handleLogin} />
+            )}
+            {activeTab === "login" && (
+              <Login
+                setToken={handleLogin}
+                onForgotPassword={() => setActiveTab("forgot")}
+              />
+            )}
+            {activeTab === "forgot" && (
+              <ForgotPassword onBackToLogin={() => setActiveTab("login")} />
+            )}
           </div>
 
           <p className="auth-form-footer">

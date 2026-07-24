@@ -29,6 +29,14 @@ export const googleAuth = async (firebaseToken) => {
   return res.json();
 };
 
+export const deleteAccount = async () => {
+  const res = await fetch(`${API_URL}/auth/account`, {
+    method: "DELETE",
+    headers: getAuthHeader(),
+  });
+  return res.json();
+};
+
 /* ================= AUTH HEADER ================= */
 
 const getAuthHeader = () => {
@@ -120,6 +128,69 @@ export const deleteGratitude = async (id) => {
   const res = await fetch(`${API_URL}/gratitude/${id}`, {
     method: "DELETE",
     headers: getAuthHeader(),
+  });
+  return res.json();
+};
+
+/* ================= TODOS ================= */
+
+export const getTodos = async () => {
+  const res = await fetch(`${API_URL}/todos`, {
+    headers: getAuthHeader(),
+  });
+  return res.json();
+};
+
+export const createTodo = async (data) => {
+  const res = await fetch(`${API_URL}/todos`, {
+    method: "POST",
+    headers: getAuthHeader(),
+    body: JSON.stringify(data),
+  });
+  return res.json();
+};
+
+export const toggleTodo = async (id) => {
+  const res = await fetch(`${API_URL}/todos/${id}/toggle`, {
+    method: "PUT",
+    headers: getAuthHeader(),
+  });
+  return res.json();
+};
+
+export const deleteTodo = async (id) => {
+  const res = await fetch(`${API_URL}/todos/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeader(),
+  });
+  return res.json();
+};
+
+/* ================= PASSWORD RESET ================= */
+
+export const forgotPassword = async (data) => {
+  const res = await fetch(`${API_URL}/auth/forgot-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+};
+
+export const verifyResetCode = async (data) => {
+  const res = await fetch(`${API_URL}/auth/verify-reset-code`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+};
+
+export const resetPassword = async (data) => {
+  const res = await fetch(`${API_URL}/auth/reset-password`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   });
   return res.json();
 };
