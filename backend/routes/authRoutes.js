@@ -127,6 +127,13 @@ router.post("/google", async (req, res) => {
   }
 
   try {
+    if (!admin.apps || !admin.apps.length) {
+      return res.status(500).json({
+        success: false,
+        message: "Firebase Admin SDK is not configured on server.",
+      });
+    }
+
     // 1️⃣ Verify Firebase ID token
     const decoded = await admin.auth().verifyIdToken(token);
 
