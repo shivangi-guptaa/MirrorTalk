@@ -10,6 +10,15 @@ const features = [
 
 function Home() {
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+
+  const handleStart = () => {
+    if (token) {
+      navigate("/dashboard");
+    } else {
+      navigate("/auth");
+    }
+  };
 
   return (
     <div className="home-shell">
@@ -60,9 +69,29 @@ function Home() {
             <li>✦ One entry at a time.</li>
           </ul>
 
-          <button className="home-cta-btn" onClick={() => navigate("/auth")}>
-            Begin gently <span className="home-btn-arrow">→</span>
+          <button className="home-cta-btn" onClick={handleStart}>
+            {token ? "Open your journal" : "Begin gently"} <span className="home-btn-arrow">→</span>
           </button>
+
+          {!token && (
+            <div style={{ marginTop: 14 }}>
+              <button
+                type="button"
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#4A7C59",
+                  fontSize: "13px",
+                  cursor: "pointer",
+                  fontWeight: 500,
+                  textDecoration: "underline",
+                }}
+                onClick={() => navigate("/auth")}
+              >
+                Already have an account? Sign in
+              </button>
+            </div>
+          )}
 
           <p className="home-cta-note">Move at your own pace 🌱</p>
         </div>
