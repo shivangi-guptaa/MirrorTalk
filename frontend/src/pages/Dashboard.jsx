@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   createJournal,
   addMood,
@@ -267,7 +267,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
     return new Date(parts[0], parts[1] - 1, parts[2]);
   };
 
-  const handleApiResponse = (res) => {
+  const handleApiResponse = useCallback((res) => {
     const isAuthError =
       res?.message === 'Token is not valid' ||
       res?.message === 'No token, authorization denied' ||
@@ -283,7 +283,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
     if (Array.isArray(res)) return res;
     if (res?.success && Array.isArray(res.data)) return res.data;
     return [];
-  };
+  }, [navigate, setToken]);
 
   const showNotification = (message) => {
     setNotification(message);
@@ -301,7 +301,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
     ])
     .catch(console.error)
     .finally(() => setLoading(false));
-  }, []);
+  }, [handleApiResponse]);
 
   const saveJournal = async (e) => {
     e.preventDefault();
