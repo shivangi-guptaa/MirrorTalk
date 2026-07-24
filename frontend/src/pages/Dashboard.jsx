@@ -450,11 +450,16 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   };
 
   const todayDateStr = getLocalDateString();
-  const todayMoods = moods.filter((m) => m.mood_date && m.mood_date.split("T")[0] === todayDateStr);
-  const todayJournals = journals.filter((j) => j.entry_date && j.entry_date.split("T")[0] === todayDateStr);
-  const todayGratitude = gratitudeHistory.filter((g) => g.entry_date && g.entry_date.split("T")[0] === todayDateStr);
   const todayTasks = todos.filter((t) => t.task_date && t.task_date.split("T")[0] === todayDateStr);
   const todayCompletedTasks = todayTasks.filter((t) => t.completed);
+
+  // Review Day — date picker state (defaults to today)
+  const [reviewDate, setReviewDate] = useState(() => getLocalDateString());
+  const reviewMoods = moods.filter((m) => m.mood_date && m.mood_date.split("T")[0] === reviewDate);
+  const reviewJournals = journals.filter((j) => j.entry_date && j.entry_date.split("T")[0] === reviewDate);
+  const reviewGratitude = gratitudeHistory.filter((g) => g.entry_date && g.entry_date.split("T")[0] === reviewDate);
+  const reviewTasks = todos.filter((t) => t.task_date && t.task_date.split("T")[0] === reviewDate);
+  const reviewCompletedTasks = reviewTasks.filter((t) => t.completed);
 
   const askDelete = (type, id, label) => setConfirmDelete({ type, id, label });
 
@@ -967,40 +972,76 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
             {activeTab === "review" && (
               <div className="tab-content" key="review">
                 <div className="dash-card review-day-card">
-                  <div className="card-header-row">
+                  <div className="card-header-row" style={{ flexWrap: "wrap", gap: 10 }}>
                     <div>
                       <h2 className="card-title">Review Your Day 🌙</h2>
-                      <p className="card-sub">Your reflection summary for today</p>
+                      <p className="card-sub">Tap any date to review that day's entries</p>
                     </div>
+                    <input
+                      type="date"
+                      value={reviewDate}
+                      max={getLocalDateString()}
+                      onChange={(e) => setReviewDate(e.target.value)}
+                      style={{
+                        border: "1px solid #EBE8E1",
+                        borderRadius: 10,
+                        padding: "6px 12px",
+                        fontSize: 13,
+                        color: "var(--text)",
+                        background: "var(--surface, #FAFAF7)",
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                      }}
+                    />
                   </div>
-                  <div className="review-stats-grid">
-                    <div className="review-stat-box">
-                      <span className="review-stat-label">Mood Check-ins</span>
-                      <span className="review-stat-num">{todayMoods.length}</span>
-                      {todayMoods.length > 0 && (
-                        <div className="review-mood-timeline">
-                          {todayMoods.map((m, idx) => (
-                            <span key={idx} className="review-mood-badge">
-                              {moodMap[m.mood_level]} {moodLabel[m.mood_level]}
-                              {m.created_at && <small className="review-time"> · {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>}
-                            </span>
-                          ))}
-                        </div>
+
+                  {reviewMoods.length === 0 && reviewJournals.length === 0 && reviewGratitude.length === 0 && reviewTasks.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "32px 16px", color: "var(--muted)" }}>
+                      <div style={{ fontSize: 36, marginBottom: 10 }}>🌱</div>
+                      <p style={{ fontSize: 14, fontWeight: 500 }}>No entries for this day yet.</p>
+                      {reviewDate === getLocalDateString() && (
+                        <p style={{ fontSize: 12, marginTop: 6 }}>Go to the <strong>Today</strong> tab to start reflecting!</p>
                       )}
                     </div>
-                    <div className="review-stat-box">
-                      <span className="review-stat-label">Journals Written</span>
-                      <span className="review-stat-num">{todayJournals.length}</span>
+                  ) : (
+                    <div className="review-stats-grid">
+                      <div className="review-stat-box">
+                        <span className="review-stat-label">Mood Check-ins</span>
+                        <span className="review-stat-num">{reviewMoods.length}</span>
+                        {reviewMoods.length > 0 && (
+                          <div className="review-mood-timeline">
+                            {reviewMoods.map((m, idx) => (
+                              <span key={idx} className="review-mood-badge">
+                                {moodMap[m.mood_level]} {moodLabel[m.mood_level]}
+                                {m.created_at && <small className="review-time"> · {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="review-stat-box">
+                        <span className="review-stat-label">Journals Written</span>
+                        <span className="review-stat-num">{reviewJournals.length}</span>
+                        {reviewJournals.length > 0 && (
+                          <div style={{ marginTop: 6 }}>
+                            {reviewJournals.map((j, i) => (
+                              <p key={i} style={{ fontSize: 11, color: "var(--muted)", margin: "2px 0", lineHeight: 1.4 }}>
+                                "{j.entry_text?.slice(0, 60)}{j.entry_text?.length > 60 ? "…" : ""}"
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="review-stat-box">
+                        <span className="review-stat-label">Gratitude Moments</span>
+                        <span className="review-stat-num">{reviewGratitude.length}</span>
+                      </div>
+                      <div className="review-stat-box">
+                        <span className="review-stat-label">Tasks Completed</span>
+                        <span className="review-stat-num">{reviewCompletedTasks.length} / {reviewTasks.length}</span>
+                      </div>
                     </div>
-                    <div className="review-stat-box">
-                      <span className="review-stat-label">Gratitude Moments</span>
-                      <span className="review-stat-num">{todayGratitude.length}</span>
-                    </div>
-                    <div className="review-stat-box">
-                      <span className="review-stat-label">Tasks Completed</span>
-                      <span className="review-stat-num">{todayCompletedTasks.length} / {todayTasks.length}</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="dash-card">

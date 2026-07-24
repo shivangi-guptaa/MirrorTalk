@@ -6,6 +6,7 @@ const dbConfig = {
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD || "",
   database: process.env.DB_NAME || "MirrorTalk",
+  dateStrings: true,
 };
 
 if (process.env.NODE_ENV === "production" || process.env.DB_SSL === "true") {
