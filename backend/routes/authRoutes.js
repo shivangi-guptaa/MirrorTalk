@@ -43,9 +43,10 @@ router.post("/signup", async (req, res) => {
         [userName, email, passwordHash]
       );
 
+    const jwtSecret = process.env.JWT_SECRET || "mirrortalk_fallback_jwt_secret_2026";
     const token = jwt.sign(
       { id: result.insertId },
-      process.env.JWT_SECRET,
+      jwtSecret,
       { expiresIn: "1d" }
     );
 
@@ -90,9 +91,10 @@ router.post("/login", async (req, res) => {
       });
     }
 
+    const jwtSecret = process.env.JWT_SECRET || "mirrortalk_fallback_jwt_secret_2026";
     const token = jwt.sign(
       { id: user.id },
-      process.env.JWT_SECRET,
+      jwtSecret,
       { expiresIn: "1d" }
     );
 
@@ -169,9 +171,10 @@ router.post("/google", async (req, res) => {
     }
 
     // 4️⃣ Create backend JWT
+    const jwtSecret = process.env.JWT_SECRET || "mirrortalk_fallback_jwt_secret_2026";
     const appToken = jwt.sign(
       { id: userId },
-      process.env.JWT_SECRET,
+      jwtSecret,
       { expiresIn: "1d" }
     );
 
@@ -183,10 +186,10 @@ router.post("/google", async (req, res) => {
       },
     });
   } catch (err) {
-    console.error(err);
-    res.status(401).json({
+    console.error("Google Auth Error:", err.message);
+    res.status(400).json({
       success: false,
-      message: "Invalid Google token",
+      message: err.message || "Google authentication failed",
     });
   }
 });
