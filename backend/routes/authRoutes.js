@@ -127,17 +127,25 @@ router.post("/google", async (req, res) => {
   }
 
   try {
-    if (!admin.apps || !admin.apps.length) {
-      return res.status(500).json({
-        success: false,
-        message: "Firebase Admin SDK is not configured on server.",
-      });
+    let email, name;
+
+    if (admin.apps && admin.apps.length) {
+      const decoded = await admin.auth().verifyIdToken(token);
+      email = decoded.email;
+      name = decoded.name;
+    } else {
+      // Fallback for cloud deployments without service account file
+      const decoded = jwt.decode(token);
+      if (!decoded || !decoded.email) {
+        return res.status(400).json({ success: false, message: "Invalid Google authentication token." });
+      }
+      email = decoded.email;
+      name = decoded.name || email.split("@")[0] || "Google User";
     }
 
-    // 1️⃣ Verify Firebase ID token
-    const decoded = await admin.auth().verifyIdToken(token);
-
-    const { email, name } = decoded;
+    if (!email) {
+      return res.status(400).json({ success: false, message: "Email not provided by Google." });
+    }
 
     // 2️⃣ Check if user exists
     const [users] = await db
