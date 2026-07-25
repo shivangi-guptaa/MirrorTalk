@@ -607,7 +607,6 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   const navItems = [
     { id: "today", icon: "✏️", label: "Today", section: "Reflect" },
     { id: "history", icon: "📖", label: "History", section: "Reflect" },
-    { id: "review", icon: "🌙", label: "Review Day", section: "Reflect" },
     { id: "stats", icon: "📊", label: "Stats", section: "Insights" },
     { id: "gratitude", icon: "🙏", label: "Gratitude", section: "Insights" },
   ];
@@ -883,10 +882,99 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
               </div>
             )}
 
-            {/* HISTORY TAB */}
+            {/* HISTORY SUPER-TAB (Reflections, Charts, Archives) */}
             {activeTab === "history" && (
               <div className="tab-content" key="history">
-                {/* Journals */}
+                {/* 1. Date Review Card */}
+                <div className="dash-card review-day-card">
+                  <div className="card-header-row" style={{ flexWrap: "wrap", gap: 10 }}>
+                    <div>
+                      <h2 className="card-title">Day Reflection Review 🌙</h2>
+                      <p className="card-sub">Select any date to view reflections and check-ins for that day</p>
+                    </div>
+                    <input
+                      type="date"
+                      value={reviewDate}
+                      max={getLocalDateString()}
+                      onChange={(e) => setReviewDate(e.target.value)}
+                      style={{
+                        border: "1px solid #EBE8E1",
+                        borderRadius: 10,
+                        padding: "6px 12px",
+                        fontSize: 13,
+                        color: "var(--text)",
+                        background: "var(--surface, #FAFAF7)",
+                        cursor: "pointer",
+                        fontFamily: "inherit",
+                      }}
+                    />
+                  </div>
+
+                  {reviewMoods.length === 0 && reviewJournals.length === 0 && reviewGratitude.length === 0 && reviewTasks.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "28px 16px", color: "var(--muted)" }}>
+                      <div style={{ fontSize: 32, marginBottom: 8 }}>🌱</div>
+                      <p style={{ fontSize: 14, fontWeight: 500 }}>No entries recorded for this date.</p>
+                      {reviewDate === getLocalDateString() && (
+                        <p style={{ fontSize: 12, marginTop: 4 }}>Go to the <strong>Today</strong> tab to log your thoughts!</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="review-stats-grid">
+                      <div className="review-stat-box">
+                        <span className="review-stat-label">Mood Check-ins</span>
+                        <span className="review-stat-num">{reviewMoods.length}</span>
+                        {reviewMoods.length > 0 && (
+                          <div className="review-mood-timeline">
+                            {reviewMoods.map((m, idx) => (
+                              <span key={idx} className="review-mood-badge">
+                                {moodMap[m.mood_level]} {moodLabel[m.mood_level]}
+                                {m.created_at && !isNaN(new Date(m.created_at).getTime()) && (
+                                  <small className="review-time"> · {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>
+                                )}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="review-stat-box">
+                        <span className="review-stat-label">Journals Written</span>
+                        <span className="review-stat-num">{reviewJournals.length}</span>
+                        {reviewJournals.length > 0 && (
+                          <div style={{ marginTop: 6 }}>
+                            {reviewJournals.map((j, i) => (
+                              <p key={i} style={{ fontSize: 11, color: "var(--muted)", margin: "2px 0", lineHeight: 1.4 }}>
+                                "{j.entry_text?.slice(0, 60)}{j.entry_text?.length > 60 ? "…" : ""}"
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="review-stat-box">
+                        <span className="review-stat-label">Gratitude Moments</span>
+                        <span className="review-stat-num">{reviewGratitude.length}</span>
+                      </div>
+                      <div className="review-stat-box">
+                        <span className="review-stat-label">Tasks Completed</span>
+                        <span className="review-stat-num">{reviewCompletedTasks.length} / {reviewTasks.length}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Visual Charts */}
+                <div className="dash-card">
+                  <h2 className="card-title">Mood Journey 📈</h2>
+                  <p className="card-sub">Your emotional trend over time</p>
+                  <MoodTrendGraph moods={moods} />
+                </div>
+
+                <div className="dash-card">
+                  <h2 className="card-title">7-Day Activity 📊</h2>
+                  <p className="card-sub">Journals, Gratitude & Tasks — last 7 days</p>
+                  <ActivityBarChart journals={journals} gratitudeHistory={gratitudeHistory} todos={todos} />
+                </div>
+
+                {/* 3. Journal Archives */}
                 <div className="dash-card">
                   <div className="card-header-row" style={{ flexWrap: "wrap", gap: 10 }}>
                     <div>
@@ -946,7 +1034,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                   )}
                 </div>
 
-                {/* Mood Log */}
+                {/* 4. Mood Log */}
                 <div className="dash-card">
                   <h2 className="card-title">Mood log</h2>
                   <p className="card-sub">{moods.length} mood {moods.length === 1 ? "entry" : "entries"}</p>
@@ -968,96 +1056,6 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                       ))}
                     </div>
                   )}
-                </div>
-              </div>
-            )}
-
-            {/* REVIEW DAY TAB */}
-            {activeTab === "review" && (
-              <div className="tab-content" key="review">
-                <div className="dash-card review-day-card">
-                  <div className="card-header-row" style={{ flexWrap: "wrap", gap: 10 }}>
-                    <div>
-                      <h2 className="card-title">Review Your Day 🌙</h2>
-                      <p className="card-sub">Tap any date to review that day's entries</p>
-                    </div>
-                    <input
-                      type="date"
-                      value={reviewDate}
-                      max={getLocalDateString()}
-                      onChange={(e) => setReviewDate(e.target.value)}
-                      style={{
-                        border: "1px solid #EBE8E1",
-                        borderRadius: 10,
-                        padding: "6px 12px",
-                        fontSize: 13,
-                        color: "var(--text)",
-                        background: "var(--surface, #FAFAF7)",
-                        cursor: "pointer",
-                        fontFamily: "inherit",
-                      }}
-                    />
-                  </div>
-
-                  {reviewMoods.length === 0 && reviewJournals.length === 0 && reviewGratitude.length === 0 && reviewTasks.length === 0 ? (
-                    <div style={{ textAlign: "center", padding: "32px 16px", color: "var(--muted)" }}>
-                      <div style={{ fontSize: 36, marginBottom: 10 }}>🌱</div>
-                      <p style={{ fontSize: 14, fontWeight: 500 }}>No entries for this day yet.</p>
-                      {reviewDate === getLocalDateString() && (
-                        <p style={{ fontSize: 12, marginTop: 6 }}>Go to the <strong>Today</strong> tab to start reflecting!</p>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="review-stats-grid">
-                      <div className="review-stat-box">
-                        <span className="review-stat-label">Mood Check-ins</span>
-                        <span className="review-stat-num">{reviewMoods.length}</span>
-                        {reviewMoods.length > 0 && (
-                          <div className="review-mood-timeline">
-                            {reviewMoods.map((m, idx) => (
-                              <span key={idx} className="review-mood-badge">
-                                {moodMap[m.mood_level]} {moodLabel[m.mood_level]}
-                                {m.created_at && <small className="review-time"> · {new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</small>}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="review-stat-box">
-                        <span className="review-stat-label">Journals Written</span>
-                        <span className="review-stat-num">{reviewJournals.length}</span>
-                        {reviewJournals.length > 0 && (
-                          <div style={{ marginTop: 6 }}>
-                            {reviewJournals.map((j, i) => (
-                              <p key={i} style={{ fontSize: 11, color: "var(--muted)", margin: "2px 0", lineHeight: 1.4 }}>
-                                "{j.entry_text?.slice(0, 60)}{j.entry_text?.length > 60 ? "…" : ""}"
-                              </p>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                      <div className="review-stat-box">
-                        <span className="review-stat-label">Gratitude Moments</span>
-                        <span className="review-stat-num">{reviewGratitude.length}</span>
-                      </div>
-                      <div className="review-stat-box">
-                        <span className="review-stat-label">Tasks Completed</span>
-                        <span className="review-stat-num">{reviewCompletedTasks.length} / {reviewTasks.length}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="dash-card">
-                  <h2 className="card-title">Mood Journey 📈</h2>
-                  <p className="card-sub">Your emotional trend over time</p>
-                  <MoodTrendGraph moods={moods} />
-                </div>
-
-                <div className="dash-card">
-                  <h2 className="card-title">7-Day Activity 📊</h2>
-                  <p className="card-sub">Journals, Gratitude & Tasks — last 7 days</p>
-                  <ActivityBarChart journals={journals} gratitudeHistory={gratitudeHistory} todos={todos} />
                 </div>
               </div>
             )}
