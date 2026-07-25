@@ -432,11 +432,78 @@
 }
 
 /* =========================
-   JOURNAL CARD
+   CARD BACKGROUND HIERARCHY
 ========================= */
 
 .journal-card {
-  /* inherits .dash-card */
+  background: #FFFFFF;
+  box-shadow: 0 4px 24px rgba(74, 124, 89, 0.05);
+}
+
+.mood-card {
+  background: #FAFAF8;
+  border-color: #E7E4DC;
+}
+
+.gratitude-card {
+  background: #F9F9F4;
+  border-color: #E6E3DB;
+}
+
+.todo-card {
+  background: #F5F7F5;
+  border-color: #E1E6E1;
+}
+
+.review-day-card {
+  background: #F8F8F6;
+  border-color: #E5E3DB;
+}
+
+.chart-card {
+  background: #F7F7F4;
+  border-color: #E4E2DA;
+}
+
+.archive-card {
+  background: #FAFAF7;
+  border-color: #E7E4DC;
+}
+
+/* Dark Mode Card Hierarchy */
+.app.dark .journal-card {
+  background: #1e1e1e;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.app.dark .mood-card {
+  background: #232322;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.app.dark .gratitude-card {
+  background: #212422;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.app.dark .todo-card {
+  background: #1d221e;
+  border-color: rgba(74, 124, 89, 0.2);
+}
+
+.app.dark .review-day-card {
+  background: #202020;
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.app.dark .chart-card {
+  background: #1b1c1b;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.app.dark .archive-card {
+  background: #1f1f1f;
+  border-color: rgba(255, 255, 255, 0.07);
 }
 
 .journal-date-label {
@@ -2527,6 +2594,30 @@ button {
 
 /* =========================
    RESPONSIVE — TABLET (≤1024px)
+========================.sidebar-close-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.sidebar-close-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #111;
+}
+
+.app.dark .sidebar-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* =========================
+   RESPONSIVE — TABLET (≤1024px)
 ========================= */
 
 @media (max-width: 1024px) {
@@ -2537,23 +2628,35 @@ button {
     height: 100vh;
     z-index: 400;
     transform: translateX(-100%);
-    box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+    box-shadow: 4px 0 24px rgba(0,0,0,0.15);
   }
 
   .sidebar.open {
     transform: translateX(0);
   }
 
+  .sidebar-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
   .sidebar-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.35);
+    background: rgba(0,0,0,0.45);
     z-index: 399;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(4px);
+    animation: fadeInOverlay 0.2s ease;
+  }
+
+  @keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   .dashboard-main {
-    padding: 24px 24px;
+    padding: 24px 20px;
     width: 100%;
   }
 
@@ -2580,13 +2683,16 @@ button {
   }
 
   .mood-row {
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
   }
 
   .mood-pill {
-    min-width: 72px;
-    padding: 10px 8px;
+    min-width: 0;
+    padding: 10px 4px;
+    flex-direction: column;
+    border-radius: 12px;
   }
 }
 
@@ -2632,49 +2738,163 @@ button {
 
   .stat-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    padding: 0 12px;
-    margin-bottom: 16px;
+    gap: 8px;
+    padding: 0;
+    margin-bottom: 14px;
   }
 
   .analytics-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 8px;
   }
 
   .stat-card {
-    padding: 14px 12px;
-    border-radius: 14px;
+    padding: 12px 10px;
+    border-radius: 12px;
   }
 
   .stat-num {
-    font-size: 22px;
+    font-size: 20px;
   }
 
+  /* 3. MOOD SELECTOR MOBILE - 5 PERFECT EQUAL COLUMNS */
   .mood-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    width: 100%;
   }
 
   .mood-pill {
     flex-direction: column;
-    padding: 10px 4px;
+    padding: 10px 2px;
     border-radius: 12px;
-    min-width: unset;
+    min-width: 0;
+    width: 100%;
   }
 
   .mood-emoji-big {
-    font-size: 22px;
+    font-size: 20px;
   }
 
-  .mood-pill-label {
-    font-size: 9px;
-  }
+/* =========================
+   SMART PERSONAL INSIGHTS CARD
+========================= */
 
+.insights-highlight-card {
+  background: #F6F8F5;
+  border: 1px solid #E1E6E0;
+  box-shadow: 0 4px 20px rgba(74, 124, 89, 0.04);
+}
+
+.app.dark .insights-highlight-card {
+  background: #1e221f;
+  border-color: rgba(134, 200, 83, 0.15);
+}
+
+.insights-list-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.insight-item-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #EAE7DF;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.insight-item-box:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+}
+
+.app.dark .insight-item-box {
+  background: #252825;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.insight-item-box.wide {
+  grid-column: span 2;
+  background: #EEF4F0;
+  border-color: rgba(74, 124, 89, 0.25);
+}
+
+.app.dark .insight-item-box.wide {
+  background: #1a2c1f;
+  border-color: rgba(134, 200, 83, 0.25);
+}
+
+.insight-item-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #F3F6F3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app.dark .insight-item-icon {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.insight-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.insight-item-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #78867D;
+}
+
+.app.dark .insight-item-title {
+  color: #a3b1a7;
+}
+
+.insight-item-val {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #2D3732;
+  line-height: 1.35;
+}
+
+.app.dark .insight-item-val {
+  color: #f0f0f0;
+}
+
+@media (max-width: 640px) {
+  .insights-list-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .insight-item-box.wide {
+    grid-column: span 1;
+  }
+}
+
+  /* 2. PROMPT INPUT MOBILE (Prevent iOS auto-zoom) */
   .journal-textarea {
-    min-height: 120px;
-    font-size: 14px;
+    min-height: 140px;
+    font-size: 15px;
+  }
+
+  .journal-prompt {
+    font-size: 13.5px;
+    line-height: 1.4;
   }
 
   .card-title {
@@ -2706,13 +2926,14 @@ button {
     gap: 6px;
   }
 
+  /* 5. HISTORY PAGE MOBILE */
   .review-stats-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 8px;
   }
 
   .review-stat-box {
-    padding: 12px;
+    padding: 10px 12px;
     border-radius: 12px;
   }
 
@@ -2731,10 +2952,6 @@ button {
   }
 
   .search-wrap {
-    width: 100%;
-  }
-
-  .search-input {
     width: 100%;
   }
 

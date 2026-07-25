@@ -1,5 +1,27 @@
 import { useEffect, useState, useCallback } from "react";
 import {
+  PenLine,
+  BookOpen,
+  BarChart3,
+  Heart,
+  Leaf,
+  CheckCircle2,
+  Trash2,
+  Download,
+  Copy,
+  Search,
+  Sparkles,
+  RotateCw,
+  LogOut,
+  UserCheck,
+  AlertTriangle,
+  FileText,
+  TrendingUp,
+  Moon,
+  Sun,
+  Plus
+} from "lucide-react";
+import {
   createJournal,
   addMood,
   getMoods,
@@ -733,6 +755,87 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   };
   const streak = calculateStreak();
 
+  // Smart Reflection Insights Calculations
+  const getMostCommonMood = () => {
+    if (!moods.length) return "Not enough data yet";
+    const counts = {};
+    moods.forEach((m) => {
+      counts[m.mood_level] = (counts[m.mood_level] || 0) + 1;
+    });
+    let maxLevel = 3;
+    let maxCount = 0;
+    Object.keys(counts).forEach((level) => {
+      if (counts[level] > maxCount) {
+        maxCount = counts[level];
+        maxLevel = Number(level);
+      }
+    });
+    return `${moodMap[maxLevel]} ${moodLabel[maxLevel]}`;
+  };
+
+  const getDaysWrittenThisMonth = () => {
+    const now = new Date();
+    const curYear = now.getFullYear();
+    const curMonth = now.getMonth();
+    const distinctDates = new Set(
+      journals
+        .filter((j) => {
+          const d = parseLocalDate(j.entry_date);
+          return d.getFullYear() === curYear && d.getMonth() === curMonth;
+        })
+        .map((j) => j.entry_date?.split("T")[0])
+    );
+    return distinctDates.size;
+  };
+
+  const getPeakReflectionTime = () => {
+    const hours = journals
+      .map((j) => (j.created_at ? new Date(j.created_at).getHours() : null))
+      .filter((h) => h !== null && !isNaN(h));
+    if (!hours.length) return "around 9 PM";
+    const slots = { Morning: 0, Afternoon: 0, Evening: 0, Night: 0 };
+    hours.forEach((h) => {
+      if (h >= 5 && h < 12) slots.Morning++;
+      else if (h >= 12 && h < 17) slots.Afternoon++;
+      else if (h >= 17 && h < 22) slots.Evening++;
+      else slots.Night++;
+    });
+    let maxSlot = "Evening";
+    let maxCount = -1;
+    Object.keys(slots).forEach((s) => {
+      if (slots[s] > maxCount) {
+        maxCount = slots[s];
+        maxSlot = s;
+      }
+    });
+    const timeLabels = {
+      Morning: "around 9 AM",
+      Afternoon: "around 2 PM",
+      Evening: "around 9 PM",
+      Night: "around 11 PM",
+    };
+    return timeLabels[maxSlot] || "around 9 PM";
+  };
+
+  const getGratitudeCount = () => {
+    return gratitudeHistory.length;
+  };
+
+  const getReflectionPattern = () => {
+    if (!journals.length && !moods.length) return "Keep reflecting to unlock personalized emotional patterns";
+    const allText = journals.map((j) => j.entry_text?.toLowerCase() || "").join(" ");
+    if (allText.includes("exam") || allText.includes("study") || allText.includes("test") || allText.includes("assignment")) {
+      return "Stress & focus increase before exams; quiet journaling restores calm";
+    }
+    if (allText.includes("work") || allText.includes("busy") || allText.includes("project") || allText.includes("internship")) {
+      return "Work and project milestones correlate with heightened reflection depth";
+    }
+    if (allText.includes("peace") || allText.includes("calm") || allText.includes("happy") || allText.includes("grateful")) {
+      return "Positive reflection notes correlate directly with peaceful mood logs";
+    }
+    return "Consistent daily reflections cultivate self-awareness and emotional steadying";
+  };
+
   const dailyQuotes = [
     { text: "Almost everything will work again if you unplug it for a few minutes, including you.", author: "Anne Lamott" },
     { text: "You don't have to control your thoughts. You just have to stop letting them control you.", author: "Dan Millman" },
@@ -745,10 +848,10 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   const todayQuote = dailyQuotes[Math.floor(Date.now() / 86400000) % dailyQuotes.length];
 
   const navItems = [
-    { id: "today", icon: "✏️", label: "Today", section: "Reflect" },
-    { id: "history", icon: "📖", label: "History", section: "Reflect" },
-    { id: "stats", icon: "📊", label: "Stats", section: "Insights" },
-    { id: "gratitude", icon: "🙏", label: "Gratitude", section: "Insights" },
+    { id: "today", icon: <PenLine size={17} />, label: "Today", section: "Reflect" },
+    { id: "history", icon: <BookOpen size={17} />, label: "History", section: "Reflect" },
+    { id: "stats", icon: <BarChart3 size={17} />, label: "Stats", section: "Insights" },
+    { id: "gratitude", icon: <Heart size={17} />, label: "Gratitude", section: "Insights" },
   ];
 
   const switchTab = (tab) => { setActiveTab(tab); setSidebarOpen(false); };
@@ -810,12 +913,22 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
       {/* SIDEBAR */}
       <aside className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <div className="sidebar-brand">
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <MirrorTalkLogo size={28} />
-            <div>
-              <span className="sidebar-brand-name">MirrorTalk</span>
-              <span className="sidebar-brand-sub">a quiet space</span>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <MirrorTalkLogo size={28} />
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span className="sidebar-brand-name">MirrorTalk</span>
+                <span className="sidebar-brand-sub">Reflect gently.</span>
+              </div>
             </div>
+            <button
+              type="button"
+              className="sidebar-close-btn"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close sidebar"
+            >
+              ✕
+            </button>
           </div>
         </div>
 
@@ -829,7 +942,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                   className={`nav-item ${activeTab === n.id ? "active" : ""}`}
                   onClick={() => switchTab(n.id)}
                 >
-                  <span className="nav-icon">{n.icon}</span> {n.label}
+                  <span className="nav-icon" style={{ display: "flex", alignItems: "center" }}>{n.icon}</span> {n.label}
                 </button>
               ))}
             </div>
@@ -849,10 +962,10 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
           {showUserMenu && (
             <div className="user-menu">
               <button className="user-menu-item" onClick={() => { setShowProfileModal(true); setShowUserMenu(false); }}>
-                <span>✏️</span> Edit Profile
+                <UserCheck size={16} /> Edit Profile
               </button>
               <div className="user-menu-item user-menu-theme">
-                <span>{darkMode ? "🌙" : "☀️"}</span>
+                {darkMode ? <Moon size={16} /> : <Sun size={16} />}
                 <span className="user-menu-theme-label">Dark Mode</span>
                 <button
                   className={`theme-toggle-switch ${darkMode ? "on" : ""}`}
@@ -864,14 +977,14 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
               </div>
               <div className="user-menu-divider" />
               <button className="user-menu-item user-menu-logout" onClick={logout}>
-                <span>🚪</span> Logout
+                <LogOut size={16} /> Logout
               </button>
               <button
                 className="user-menu-item user-menu-logout"
                 style={{ color: "#ef4444" }}
                 onClick={() => { setShowDeleteAccountModal(true); setShowUserMenu(false); }}
               >
-                <span>⚠️</span> Delete Account
+                <AlertTriangle size={16} /> Delete Account
               </button>
             </div>
           )}
@@ -913,14 +1026,16 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                 {/* Journal Card */}
                 <div className="dash-card journal-card">
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
-                    <p className="journal-prompt" style={{ margin: 0, flex: 1 }}>💭 {activePrompt}</p>
+                    <p className="journal-prompt" style={{ margin: 0, flex: 1, display: "flex", alignItems: "center", gap: 6 }}>
+                      <Sparkles size={16} color="#4A7C59" /> {activePrompt}
+                    </p>
                     <button
                       type="button"
                       className="btn-secondary"
-                      style={{ marginTop: 0, padding: "4px 10px", fontSize: "12px", flexShrink: 0 }}
+                      style={{ marginTop: 0, padding: "4px 10px", fontSize: "12px", flexShrink: 0, display: "inline-flex", alignItems: "center", gap: 4 }}
                       onClick={getNextPrompt}
                     >
-                      🔄 New Prompt
+                      <RotateCw size={12} /> New Prompt
                     </button>
                   </div>
                   <form onSubmit={saveJournal}>
@@ -940,7 +1055,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                 </div>
 
                 {/* Mood Card */}
-                <div className="dash-card">
+                <div className="dash-card mood-card">
                   <h2 className="card-title">Mood</h2>
                   <p className="card-sub">There's no right or wrong answer.</p>
                   <div className="mood-row">
@@ -969,8 +1084,10 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                 </div>
 
                 {/* Gratitude Card */}
-                <div className="dash-card">
-                  <h2 className="card-title">Gratitude</h2>
+                <div className="dash-card gratitude-card">
+                  <h2 className="card-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Heart size={18} color="#4A7C59" /> Gratitude
+                  </h2>
                   <p className="card-sub">Even one small thing is enough.</p>
                   <form onSubmit={(e) => { e.preventDefault(); saveGratitudeEntry(); }}>
                     <div className="gratitude-inputs">
@@ -986,7 +1103,9 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                 <div className="dash-card todo-card">
                   <div className="card-header-row">
                     <div>
-                      <h2 className="card-title">Daily Intentions ✅</h2>
+                      <h2 className="card-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <CheckCircle2 size={18} color="#4A7C59" /> Daily Intentions
+                      </h2>
                       <p className="card-sub">
                         {todayTasks.length === 0 ? "Set small, peaceful goals for your day." : `${todayCompletedTasks.length} of ${todayTasks.length} completed`}
                       </p>
@@ -1000,8 +1119,8 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                       value={newTodoText}
                       onChange={(e) => setNewTodoText(e.target.value)}
                     />
-                    <button type="submit" className="btn-primary" style={{ marginTop: 0, padding: "0 20px", whiteSpace: "nowrap" }}>
-                      + Add
+                    <button type="submit" className="btn-primary" style={{ marginTop: 0, padding: "0 20px", whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <Plus size={16} /> Add
                     </button>
                   </form>
                   {todayTasks.length > 0 && (
@@ -1012,7 +1131,9 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                             <input type="checkbox" className="todo-checkbox" checked={Boolean(t.completed)} onChange={() => handleToggleTodo(t.id)} />
                             <span className="todo-text-content">{t.task_text}</span>
                           </label>
-                          <button className="delete-btn" onClick={() => handleDeleteTodo(t.id)}>🗑️</button>
+                          <button className="delete-btn" onClick={() => handleDeleteTodo(t.id)} title="Delete todo">
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -1028,7 +1149,9 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                 <div className="dash-card review-day-card">
                   <div className="card-header-row" style={{ flexWrap: "wrap", gap: 10 }}>
                     <div>
-                      <h2 className="card-title">Day Reflection Review 🌙</h2>
+                      <h2 className="card-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <BookOpen size={18} color="#4A7C59" /> Day Reflection Review
+                      </h2>
                       <p className="card-sub">Select any date to view reflections and check-ins for that day</p>
                     </div>
                     <input
@@ -1051,7 +1174,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
 
                   {reviewMoods.length === 0 && reviewJournals.length === 0 && reviewGratitude.length === 0 && reviewTasks.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "28px 16px", color: "var(--muted)" }}>
-                      <div style={{ fontSize: 32, marginBottom: 8 }}>🌱</div>
+                      <div style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}><Leaf size={28} color="#4A7C59" /></div>
                       <p style={{ fontSize: 14, fontWeight: 500 }}>No entries recorded for this date.</p>
                       {reviewDate === getLocalDateString() && (
                         <p style={{ fontSize: 12, marginTop: 4 }}>Go to the <strong>Today</strong> tab to log your thoughts!</p>
@@ -1101,28 +1224,34 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                 </div>
 
                 {/* 2. Visual Charts */}
-                <div className="dash-card">
-                  <h2 className="card-title">Mood Journey 📈</h2>
+                <div className="dash-card chart-card">
+                  <h2 className="card-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <TrendingUp size={18} color="#4A7C59" /> Mood Journey
+                  </h2>
                   <p className="card-sub">Your emotional trend over time</p>
                   <MoodTrendGraph moods={moods} />
                 </div>
 
-                <div className="dash-card">
-                  <h2 className="card-title">7-Day Activity 📊</h2>
+                <div className="dash-card chart-card">
+                  <h2 className="card-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <BarChart3 size={18} color="#4A7C59" /> 7-Day Activity
+                  </h2>
                   <p className="card-sub">Journals, Gratitude & Tasks — last 7 days</p>
                   <ActivityBarChart journals={journals} gratitudeHistory={gratitudeHistory} todos={todos} />
                 </div>
 
                 {/* 3. Journal Archives */}
-                <div className="dash-card">
+                <div className="dash-card archive-card">
                   <div className="card-header-row" style={{ flexWrap: "wrap", gap: 10 }}>
                     <div>
-                      <h2 className="card-title">Your words</h2>
+                      <h2 className="card-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                        <PenLine size={18} color="#4A7C59" /> Your words
+                      </h2>
                       <p className="card-sub">{journals.length} journal {journals.length === 1 ? "entry" : "entries"}</p>
                     </div>
                     <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
                       <div className="search-wrap">
-                        <span className="search-icon">🔍</span>
+                        <span className="search-icon" style={{ display: "flex", alignItems: "center" }}><Search size={14} color="var(--muted)" /></span>
                         <input
                           className="search-input"
                           placeholder="Search entries..."
@@ -1130,8 +1259,12 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                           onChange={(e) => setJournalSearch(e.target.value)}
                         />
                       </div>
-                      <button className="export-btn" onClick={exportData}>📥 Export CSV</button>
-                      <button className="export-btn" onClick={exportPDF} style={{ background: "#EEF4F0", color: "#4A7C59", border: "1px solid rgba(74,124,89,0.2)" }}>📄 Export PDF</button>
+                      <button className="export-btn" onClick={exportData} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <Download size={14} /> Export CSV
+                      </button>
+                      <button className="export-btn" onClick={exportPDF} style={{ background: "#EEF4F0", color: "#4A7C59", border: "1px solid rgba(74,124,89,0.2)", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <FileText size={14} /> Export PDF
+                      </button>
                     </div>
                   </div>
 
@@ -1155,7 +1288,9 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                             </div>
                             <div className="entry-summary-right">
                               <span className="entry-expand-badge">Read ▾</span>
-                              <button className="delete-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); askDelete("journal", j.id, j.entry_date); }}>🗑️</button>
+                              <button className="delete-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); askDelete("journal", j.id, j.entry_date); }} title="Delete entry">
+                                <Trash2 size={14} />
+                              </button>
                             </div>
                           </summary>
                           <div className="entry-body">
@@ -1163,9 +1298,15 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                             <div className="entry-body-meta">
                               <span className="word-count-badge">{j.entry_text?.trim().split(/\s+/).filter(Boolean).length} words</span>
                               <div className="entry-action-pills">
-                                <button type="button" className="entry-pill-btn" onClick={() => copySingleJournal(j.entry_text)}>📋 Copy</button>
-                                <button type="button" className="entry-pill-btn entry-pill-save" onClick={() => downloadSingleJournal(j)}>📄 Save .txt</button>
-                                <button type="button" className="entry-pill-btn entry-pill-save" onClick={() => downloadSingleJournalPDF(j)}>📄 Save .pdf</button>
+                                <button type="button" className="entry-pill-btn" onClick={() => copySingleJournal(j.entry_text)} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                  <Copy size={12} /> Copy
+                                </button>
+                                <button type="button" className="entry-pill-btn entry-pill-save" onClick={() => downloadSingleJournal(j)} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                  <Download size={12} /> Save .txt
+                                </button>
+                                <button type="button" className="entry-pill-btn entry-pill-save" onClick={() => downloadSingleJournalPDF(j)} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                  <FileText size={12} /> Save .pdf
+                                </button>
                               </div>
                             </div>
                           </div>
@@ -1176,8 +1317,10 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                 </div>
 
                 {/* 4. Mood Log */}
-                <div className="dash-card">
-                  <h2 className="card-title">Mood log</h2>
+                <div className="dash-card archive-card">
+                  <h2 className="card-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <BarChart3 size={18} color="#4A7C59" /> Mood log
+                  </h2>
                   <p className="card-sub">{moods.length} mood {moods.length === 1 ? "entry" : "entries"}</p>
                   {moods.length === 0 ? (
                     <EmptyState message="Your mood entries will appear here." />
@@ -1192,7 +1335,9 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                               {parseLocalDate(m.mood_date).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
                             </span>
                           </div>
-                          <button className="delete-btn" onClick={() => askDelete("mood", m.id, m.mood_date)}>🗑️</button>
+                          <button className="delete-btn" onClick={() => askDelete("mood", m.id, m.mood_date)} title="Delete mood">
+                            <Trash2 size={14} />
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -1204,9 +1349,63 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
             {/* STATS TAB */}
             {activeTab === "stats" && (
               <div className="tab-content" key="stats">
-                {streak > 0 && <div className="streak-badge">🔥 {streak} day{streak > 1 ? "s" : ""} of reflection</div>}
+                {streak > 0 && (
+                  <div className="streak-badge" style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                    <Sparkles size={14} color="#92400e" /> {streak} day{streak > 1 ? "s" : ""} of reflection
+                  </div>
+                )}
 
-                <div className="stat-grid">
+                {/* SMART PERSONAL INSIGHTS CARD */}
+                <div className="dash-card insights-highlight-card" style={{ marginTop: 16 }}>
+                  <h2 className="card-title" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <Sparkles size={18} color="#4A7C59" /> Smart Personal Insights
+                  </h2>
+                  <p className="card-sub">Patterns & trends discovered from your reflection logs</p>
+
+                  <div className="insights-list-grid">
+                    <div className="insight-item-box">
+                      <span className="insight-item-icon">😊</span>
+                      <div className="insight-item-info">
+                        <span className="insight-item-title">Most common mood</span>
+                        <span className="insight-item-val">{getMostCommonMood()}</span>
+                      </div>
+                    </div>
+
+                    <div className="insight-item-box">
+                      <span className="insight-item-icon">📅</span>
+                      <div className="insight-item-info">
+                        <span className="insight-item-title">Monthly reflection</span>
+                        <span className="insight-item-val">{getDaysWrittenThisMonth()} day{getDaysWrittenThisMonth() === 1 ? "" : "s"} written this month</span>
+                      </div>
+                    </div>
+
+                    <div className="insight-item-box">
+                      <span className="insight-item-icon">🌙</span>
+                      <div className="insight-item-info">
+                        <span className="insight-item-title">Peak reflection hour</span>
+                        <span className="insight-item-val">You journal most {getPeakReflectionTime()}</span>
+                      </div>
+                    </div>
+
+                    <div className="insight-item-box">
+                      <span className="insight-item-icon">❤️</span>
+                      <div className="insight-item-info">
+                        <span className="insight-item-title">Gratitude practice</span>
+                        <span className="insight-item-val">Gratitude appears in {getGratitudeCount()} moment{getGratitudeCount() === 1 ? "" : "s"}</span>
+                      </div>
+                    </div>
+
+                    <div className="insight-item-box wide">
+                      <span className="insight-item-icon">💡</span>
+                      <div className="insight-item-info">
+                        <span className="insight-item-title">Reflection Pattern</span>
+                        <span className="insight-item-val">{getReflectionPattern()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="stat-grid" style={{ marginTop: 16 }}>
                   <div className="stat-card">
                     <span className="stat-label">This week</span>
                     <span className="stat-num">{summary?.total_days ?? "—"}</span>
