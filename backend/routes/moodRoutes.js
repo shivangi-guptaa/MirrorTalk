@@ -42,7 +42,7 @@ router.get("/", authMiddleware, async (req, res) => {
       [userId]
     );
 
-    res.json(moods);
+    res.json({ success: true, data: moods });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

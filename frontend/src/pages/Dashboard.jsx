@@ -360,11 +360,26 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
     return `${year}-${month}-${day}`;
   };
 
+  const normalizeDateStr = (d) => {
+    if (!d) return "";
+    if (typeof d === "string") {
+      return d.split("T")[0].split(" ")[0].trim();
+    }
+    if (d instanceof Date) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const day = String(d.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+    return String(d).split("T")[0].split(" ")[0].trim();
+  };
+
   const parseLocalDate = (dateStr) => {
     if (!dateStr) return new Date();
-    const parts = dateStr.split("T")[0].split("-");
+    const cleanStr = normalizeDateStr(dateStr);
+    const parts = cleanStr.split("-");
     if (parts.length < 3) return new Date(dateStr);
-    return new Date(parts[0], parts[1] - 1, parts[2]);
+    return new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
   };
 
   const safeExtractArray = useCallback((res) => {
@@ -420,31 +435,41 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   const saveJournal = async (e) => {
     e.preventDefault();
     if (!entry.trim()) return;
-    try {
-      await createJournal({ entry_text: entry, entry_date: getLocalDateString() });
+
+    const todayDate = getLocalDateString();
+    const res = await createJournal({
+      entry_text: entry,
+      entry_date: todayDate,
+    });
+
+    if (res?.success) {
       setEntry("");
-      showNotification("📝 Journal saved");
-      const freshJournals = await getJournals();
-      updateStateSafely(setJournals, freshJournals);
-      const freshMoods = await getMoods();
-      updateStateSafely(setMoods, freshMoods);
-      const freshSummary = await getWeeklyMoodSummary();
-      if (freshSummary) setSummary(freshSummary);
-    } catch {
-      showNotification("❌ Failed to save journal");
+      await getJournals().then((r) => updateStateSafely(setJournals, r)).catch(console.error);
+      getWeeklyMoodSummary().then((res) => res && setSummary(res)).catch(console.error);
+      showNotification("✨ Reflection saved gently");
+    } else {
+      showNotification("❌ Could not save. Try again.");
     }
   };
 
   const saveGratitudeEntry = async () => {
-    const v1 = g1.trim(), v2 = g2.trim(), v3 = g3.trim();
-    if (!v1 && !v2 && !v3) return;
-    try {
-      await saveGratitude({ gratitude_1: v1 || null, gratitude_2: v2 || null, gratitude_3: v3 || null, entry_date: getLocalDateString() });
-      setG1(""); setG2(""); setG3("");
-      const freshGrat = await getGratitudeHistory();
-      updateStateSafely(setGratitudeHistory, freshGrat);
-      showNotification("🙏 Gratitude saved");
-    } catch {
+    if (!g1.trim() && !g2.trim() && !g3.trim()) return;
+
+    const todayDate = getLocalDateString();
+    const res = await saveGratitude({
+      gratitude_1: g1.trim() || null,
+      gratitude_2: g2.trim() || null,
+      gratitude_3: g3.trim() || null,
+      entry_date: todayDate,
+    });
+
+    if (res?.success) {
+      setG1("");
+      setG2("");
+      setG3("");
+      await getGratitudeHistory().then((r) => updateStateSafely(setGratitudeHistory, r)).catch(console.error);
+      showNotification("🌿 Gratitude saved");
+    } else {
       showNotification("❌ Failed to save gratitude");
     }
   };
@@ -452,57 +477,52 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   const handleAddTodo = async (e) => {
     e.preventDefault();
     if (!newTodoText.trim()) return;
-    try {
-      const res = await createTodo({ task_text: newTodoText.trim(), task_date: getLocalDateString() });
-      if (res?.success || res?.id || res?.message) {
-        showNotification("✅ Task added");
-        setNewTodoText("");
-        const freshTodos = await getTodos();
-        updateStateSafely(setTodos, freshTodos);
-      } else {
-        showNotification("❌ Failed to add task");
-      }
-    } catch (err) {
-      console.error(err);
-      showNotification("❌ Failed to add task");
+
+    const todayDate = getLocalDateString();
+    const res = await createTodo({
+      task_text: newTodoText.trim(),
+      task_date: todayDate,
+    });
+
+    if (res?.success) {
+      setNewTodoText("");
+      await getTodos().then((r) => updateStateSafely(setTodos, r)).catch(console.error);
+      showNotification("✅ Intention added");
+    } else {
+      showNotification("❌ Failed to add intention");
     }
   };
 
   const handleToggleTodo = async (id) => {
-    try {
-      await toggleTodo(id);
-      const freshTodos = await getTodos();
-      updateStateSafely(setTodos, freshTodos);
-    } catch {
-      showNotification("Failed to update task");
+    const res = await toggleTodo(id);
+    if (res?.success) {
+      await getTodos().then((r) => updateStateSafely(setTodos, r)).catch(console.error);
     }
   };
 
   const handleDeleteTodo = async (id) => {
-    try {
-      await deleteTodoApi(id);
-      const freshTodos = await getTodos();
-      updateStateSafely(setTodos, freshTodos);
-      showNotification("🗑️ Task deleted");
-    } catch {
-      showNotification("Failed to delete task");
+    const res = await deleteTodoApi(id);
+    if (res?.success) {
+      await getTodos().then((r) => updateStateSafely(setTodos, r)).catch(console.error);
+      showNotification("🗑️ Intention removed");
     }
   };
 
   const todayDateStr = getLocalDateString();
   const todayTasks = todos.filter((t) => {
     if (!t.task_date) return true;
-    const taskDate = t.task_date.split("T")[0];
+    const taskDate = normalizeDateStr(t.task_date || t.created_at);
     return taskDate === todayDateStr || !t.completed;
   });
   const todayCompletedTasks = todayTasks.filter((t) => t.completed);
 
   // Review Day — date picker state (defaults to today)
   const [reviewDate, setReviewDate] = useState(() => getLocalDateString());
-  const reviewMoods = moods.filter((m) => m.mood_date && m.mood_date.split("T")[0] === reviewDate);
-  const reviewJournals = journals.filter((j) => j.entry_date && j.entry_date.split("T")[0] === reviewDate);
-  const reviewGratitude = gratitudeHistory.filter((g) => g.entry_date && g.entry_date.split("T")[0] === reviewDate);
-  const reviewTasks = todos.filter((t) => t.task_date && t.task_date.split("T")[0] === reviewDate);
+  const targetReviewDateStr = normalizeDateStr(reviewDate);
+  const reviewMoods = moods.filter((m) => normalizeDateStr(m.mood_date || m.created_at) === targetReviewDateStr);
+  const reviewJournals = journals.filter((j) => normalizeDateStr(j.entry_date || j.created_at) === targetReviewDateStr);
+  const reviewGratitude = gratitudeHistory.filter((g) => normalizeDateStr(g.entry_date || g.created_at) === targetReviewDateStr);
+  const reviewTasks = todos.filter((t) => normalizeDateStr(t.task_date || t.created_at) === targetReviewDateStr);
   const reviewCompletedTasks = reviewTasks.filter((t) => t.completed);
 
   const askDelete = (type, id, label) => setConfirmDelete({ type, id, label });

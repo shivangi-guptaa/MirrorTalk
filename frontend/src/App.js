@@ -29,7 +29,7 @@ function App() {
             path="/dashboard"
             element={
               token ? (
-                <Dashboard setToken={setToken} toggleTheme={toggleTheme} darkMode={darkMode} />
+                <Dashboard token={token} setToken={setToken} toggleTheme={toggleTheme} darkMode={darkMode} />
               ) : (
                 <Navigate to="/auth" replace />
               )
