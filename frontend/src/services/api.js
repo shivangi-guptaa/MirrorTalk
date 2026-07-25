@@ -1,9 +1,15 @@
-const rawApiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
-let cleanUrl = rawApiUrl.trim().replace(/\/+$/, "");
-if (!cleanUrl.endsWith("/api")) {
-  cleanUrl = `${cleanUrl}/api`;
-}
-const API_URL = cleanUrl;
+const getApiBaseUrl = () => {
+  if (process.env.REACT_APP_API_URL) {
+    let clean = process.env.REACT_APP_API_URL.trim().replace(/\/+$/, "");
+    return clean.endsWith("/api") ? clean : `${clean}/api`;
+  }
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    return `${window.location.origin}/api`;
+  }
+  return "http://localhost:5000/api";
+};
+
+const API_URL = getApiBaseUrl();
 
 /* ================= AUTH ================= */
 
