@@ -1149,7 +1149,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                       {gratitudeHistory.map((g, i) => (
                         <div key={g.id ?? i} className="grat-entry">
                           <span className="grat-entry-date">
-                            {new Date(g.entry_date).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
+                            {parseLocalDate(g.entry_date).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
                           </span>
                           <div className="grat-items">
                             {g.gratitude_1 && <span className="grat-tag">{g.gratitude_1}</span>}
