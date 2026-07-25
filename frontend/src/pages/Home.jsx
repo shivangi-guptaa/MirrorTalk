@@ -86,7 +86,7 @@ function Home() {
                   fontWeight: 500,
                   textDecoration: "underline",
                 }}
-                onClick={() => navigate("/auth")}
+                onClick={() => navigate("/auth?mode=login", { state: { mode: "login" } })}
               >
                 Already have an account? Sign in
               </button>

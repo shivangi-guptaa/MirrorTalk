@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Login from "./Login";
 import Register from "./Register";
 import ForgotPassword from "./ForgotPassword";
@@ -13,8 +13,25 @@ const features = [
 ];
 
 function Auth({ setToken }) {
-  const [activeTab, setActiveTab] = useState("register");
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [activeTab, setActiveTab] = useState(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get("mode") === "login" || location.state?.mode === "login") {
+      return "login";
+    }
+    return "register";
+  });
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get("mode") === "login" || location.state?.mode === "login") {
+      setActiveTab("login");
+    } else if (searchParams.get("mode") === "register" || location.state?.mode === "register") {
+      setActiveTab("register");
+    }
+  }, [location]);
 
   const handleLogin = (token) => {
     setToken(token);
