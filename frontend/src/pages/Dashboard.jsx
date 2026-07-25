@@ -918,12 +918,16 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                               <span className="entry-preview">{j.entry_text?.slice(0, 80)}{j.entry_text?.length > 80 ? "…" : ""}</span>
                               <span className="entry-date">
                                 {parseLocalDate(j.entry_date).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
-                                {j.created_at && <span style={{ marginLeft: 6, opacity: 0.6 }}>· {new Date(j.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</span>}
+                                {j.created_at && !isNaN(new Date(j.created_at).getTime()) && (
+                                  <span style={{ marginLeft: 6, opacity: 0.6 }}>
+                                    · {new Date(j.created_at).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}
+                                  </span>
+                                )}
                               </span>
                             </div>
                             <div className="entry-summary-right">
                               <span className="entry-expand-badge">Read ▾</span>
-                              <button className="delete-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); askDelete("journal", j.id, j.date); }}>🗑️</button>
+                              <button className="delete-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); askDelete("journal", j.id, j.entry_date); }}>🗑️</button>
                             </div>
                           </summary>
                           <div className="entry-body">
