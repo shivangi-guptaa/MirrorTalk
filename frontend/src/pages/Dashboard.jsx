@@ -434,62 +434,106 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
 
   const saveJournal = async (e) => {
     e.preventDefault();
-    if (!entry.trim()) return;
+    const textToSave = entry.trim();
+    if (!textToSave) return;
 
     const todayDate = getLocalDateString();
-    const res = await createJournal({
-      entry_text: entry,
+    const tempId = Date.now();
+    const newEntryObj = {
+      id: tempId,
+      entry_text: textToSave,
       entry_date: todayDate,
-    });
+      created_at: new Date().toISOString(),
+    };
 
-    if (res?.success) {
-      setEntry("");
-      await getJournals().then((r) => updateStateSafely(setJournals, r)).catch(console.error);
-      getWeeklyMoodSummary().then((res) => res && setSummary(res)).catch(console.error);
-      showNotification("✨ Reflection saved gently");
-    } else {
-      showNotification("❌ Could not save. Try again.");
+    // 1. Instant Optimistic UI Update (0ms Latency)
+    setJournals((prev) => [newEntryObj, ...prev]);
+    setEntry("");
+    showNotification("✨ Reflection saved gently");
+
+    try {
+      // 2. Sync with Backend DB
+      await createJournal({
+        entry_text: textToSave,
+        entry_date: todayDate,
+      });
+      const freshJournals = await getJournals();
+      updateStateSafely(setJournals, freshJournals);
+      getWeeklyMoodSummary().then((s) => s && setSummary(s)).catch(console.error);
+    } catch (err) {
+      console.error("Backend journal save error:", err);
     }
   };
 
   const saveGratitudeEntry = async () => {
-    if (!g1.trim() && !g2.trim() && !g3.trim()) return;
+    const v1 = g1.trim();
+    const v2 = g2.trim();
+    const v3 = g3.trim();
+    if (!v1 && !v2 && !v3) return;
 
     const todayDate = getLocalDateString();
-    const res = await saveGratitude({
-      gratitude_1: g1.trim() || null,
-      gratitude_2: g2.trim() || null,
-      gratitude_3: g3.trim() || null,
+    const tempId = Date.now();
+    const newGratObj = {
+      id: tempId,
+      gratitude_1: v1 || null,
+      gratitude_2: v2 || null,
+      gratitude_3: v3 || null,
       entry_date: todayDate,
-    });
+      created_at: new Date().toISOString(),
+    };
 
-    if (res?.success) {
-      setG1("");
-      setG2("");
-      setG3("");
-      await getGratitudeHistory().then((r) => updateStateSafely(setGratitudeHistory, r)).catch(console.error);
-      showNotification("🌿 Gratitude saved");
-    } else {
-      showNotification("❌ Failed to save gratitude");
+    // 1. Instant Optimistic UI Update (0ms Latency)
+    setGratitudeHistory((prev) => [newGratObj, ...prev]);
+    setG1("");
+    setG2("");
+    setG3("");
+    showNotification("🌿 Gratitude saved");
+
+    try {
+      // 2. Sync with Backend DB
+      await saveGratitude({
+        gratitude_1: v1 || null,
+        gratitude_2: v2 || null,
+        gratitude_3: v3 || null,
+        entry_date: todayDate,
+      });
+      const freshGrat = await getGratitudeHistory();
+      updateStateSafely(setGratitudeHistory, freshGrat);
+    } catch (err) {
+      console.error("Backend gratitude save error:", err);
     }
   };
 
   const handleAddTodo = async (e) => {
     e.preventDefault();
-    if (!newTodoText.trim()) return;
+    const todoText = newTodoText.trim();
+    if (!todoText) return;
 
     const todayDate = getLocalDateString();
-    const res = await createTodo({
-      task_text: newTodoText.trim(),
+    const tempId = Date.now();
+    const newTodoObj = {
+      id: tempId,
+      task_text: todoText,
+      completed: 0,
       task_date: todayDate,
-    });
+      created_at: new Date().toISOString(),
+    };
 
-    if (res?.success) {
-      setNewTodoText("");
-      await getTodos().then((r) => updateStateSafely(setTodos, r)).catch(console.error);
-      showNotification("✅ Intention added");
-    } else {
-      showNotification("❌ Failed to add intention");
+    // 1. Instant Optimistic UI Update (0ms Latency)
+    setTodos((prev) => [newTodoObj, ...prev]);
+    setNewTodoText("");
+    showNotification("✅ Intention added");
+
+    try {
+      // 2. Sync with Backend DB
+      await createTodo({
+        task_text: todoText,
+        task_date: todayDate,
+      });
+      const freshTodos = await getTodos();
+      updateStateSafely(setTodos, freshTodos);
+    } catch (err) {
+      console.error("Backend todo save error:", err);
     }
   };
 
