@@ -67,20 +67,16 @@ function Register({ onSwitchToLogin, onLogin }) {
         return;
       }
 
-      const msg = (res?.message || res?.error || "").toLowerCase();
-      if (msg.includes("already exists")) {
-        await handleExistingUserAutoLogin();
-        return;
-      }
+      // Automatically attempt auto-login (handles existing users & reconnects)
+      const loggedIn = await handleExistingUserAutoLogin();
+      if (loggedIn) return;
 
       setError(res?.message || res?.error || "Registration failed. Please try again.");
     } catch (err) {
       console.error("Registration submit error:", err);
-      const message = err?.response?.data?.message || err?.message || "";
-      if (message.toLowerCase().includes("already exists")) {
-        await handleExistingUserAutoLogin();
-      } else {
-        setError(message || "Registration failed. Please try again.");
+      const loggedIn = await handleExistingUserAutoLogin();
+      if (!loggedIn) {
+        setError("Registration failed. Please try again.");
       }
     } finally {
       setLoading(false);

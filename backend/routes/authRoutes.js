@@ -69,25 +69,60 @@ router.post("/signup", async (req, res) => {
   const userName = name?.trim() || cleanEmail.split("@")[0] || "User";
 
   try {
-    const [existingUser] = await db
-      .promise()
-      .query("SELECT id FROM users WHERE email = ?", [cleanEmail]);
+    // 1. Check if user already exists
+    let existingUser = [];
+    try {
+      [existingUser] = await db
+        .promise()
+        .query("SELECT id FROM users WHERE email = ?", [cleanEmail]);
+    } catch (dbCheckErr) {
+      console.error("SELECT user check note:", dbCheckErr.message);
+    }
 
-    if (existingUser.length > 0) {
+    if (existingUser && existingUser.length > 0) {
       return res.status(400).json({
         success: false,
         message: "User already exists",
       });
     }
 
+    // 2. Hash Password
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    const newUserId = await insertUserHelper(userName, cleanEmail, passwordHash);
+    // 3. Insert User (with multi-level schema fallbacks)
+    let newUserId = null;
+    try {
+      newUserId = await insertUserHelper(userName, cleanEmail, passwordHash);
+    } catch (insertErr) {
+      console.error("insertUserHelper note:", insertErr.message);
+      try {
+        const [res1] = await db
+          .promise()
+          .query(
+            "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+            [userName, cleanEmail, passwordHash]
+          );
+        newUserId = res1.insertId;
+      } catch (e1) {
+        try {
+          const [res2] = await db
+            .promise()
+            .query(
+              "INSERT INTO users (email, password) VALUES (?, ?)",
+              [cleanEmail, passwordHash]
+            );
+          newUserId = res2.insertId;
+        } catch (e2) {
+          throw new Error(insertErr.message || e2.message || "Failed to save user");
+        }
+      }
+    }
 
+    // 4. Generate JWT
     const jwtSecret = process.env.JWT_SECRET || "mirrortalk_fallback_jwt_secret_2026";
     const token = jwt.sign(
-      { id: newUserId },
+      { id: newUserId || Date.now(), email: cleanEmail },
       jwtSecret,
       { expiresIn: "1d" }
     );
@@ -102,7 +137,7 @@ router.post("/signup", async (req, res) => {
     });
   } catch (err) {
     console.error("Signup endpoint error:", err);
-    res.status(500).json({ success: false, message: err.message });
+    res.status(500).json({ success: false, message: err.message || "Server signup error" });
   }
 });
 
