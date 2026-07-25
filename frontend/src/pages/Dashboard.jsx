@@ -314,7 +314,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [profile, setProfile] = useState(() => {
     const saved = localStorage.getItem(profileKey);
-    return saved ? JSON.parse(saved) : { name: "User", bio: "Click to edit profile", avatar: "emoji:🌻", onboarded: false };
+    return saved ? JSON.parse(saved) : { name: "User", bio: "Student & Developer", avatar: "emoji:🌻", onboarded: false };
   });
 
   const [showOnboarding, setShowOnboarding] = useState(() => {
@@ -585,24 +585,39 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
     if (!confirmDelete) return;
     const { type, id } = confirmDelete;
     setConfirmDelete(null);
-    try {
-      if (type === "journal") {
+
+    if (type === "journal") {
+      // 1. Instant Optimistic Local Removal (0ms Latency)
+      setJournals((prev) => prev.filter((j) => String(j.id) !== String(id)));
+      showNotification("🗑️ Journal deleted");
+      try {
         await deleteJournal(id);
         getJournals().then((res) => updateStateSafely(setJournals, res)).catch(console.error);
         getWeeklyMoodSummary().then((res) => res && setSummary(res)).catch(console.error);
-        showNotification("🗑️ Journal deleted");
-      } else if (type === "mood") {
+      } catch (err) {
+        console.error("Delete journal background error:", err);
+      }
+    } else if (type === "mood") {
+      // 1. Instant Optimistic Local Removal (0ms Latency)
+      setMoods((prev) => prev.filter((m) => String(m.id) !== String(id)));
+      showNotification("🗑️ Mood entry deleted");
+      try {
         await deleteMood(id);
         getMoods().then((res) => updateStateSafely(setMoods, res)).catch(console.error);
         getWeeklyMoodSummary().then((res) => res && setSummary(res)).catch(console.error);
-        showNotification("🗑️ Mood entry deleted");
-      } else if (type === "gratitude") {
+      } catch (err) {
+        console.error("Delete mood background error:", err);
+      }
+    } else if (type === "gratitude") {
+      // 1. Instant Optimistic Local Removal (0ms Latency)
+      setGratitudeHistory((prev) => prev.filter((g) => String(g.id) !== String(id)));
+      showNotification("🗑️ Gratitude deleted");
+      try {
         await deleteGratitude(id);
         getGratitudeHistory().then((res) => updateStateSafely(setGratitudeHistory, res)).catch(console.error);
-        showNotification("🗑️ Gratitude deleted");
+      } catch (err) {
+        console.error("Delete gratitude background error:", err);
       }
-    } catch {
-      showNotification("❌ Failed to delete");
     }
   };
 
@@ -1140,13 +1155,26 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                         className={`mood-pill ${mood === m ? "active" : ""}`}
                         onClick={async () => {
                           setMood(m);
+                          const todayDate = getLocalDateString();
+                          const tempId = Date.now();
+                          const newMoodObj = {
+                            id: tempId,
+                            mood_level: m,
+                            mood_date: todayDate,
+                            created_at: new Date().toISOString(),
+                          };
+                          // 1. Instant Optimistic UI Update (0ms Latency)
+                          setMoods((prev) => [newMoodObj, ...prev]);
+                          showNotification("😊 Mood saved");
+
                           try {
-                            await addMood({ mood_level: m, mood_date: getLocalDateString() });
-                            getMoods().then((res) => updateStateSafely(setMoods, res)).catch(console.error);
+                            // 2. Sync with Backend
+                            await addMood({ mood_level: m, mood_date: todayDate });
+                            const freshMoods = await getMoods();
+                            updateStateSafely(setMoods, freshMoods);
                             getWeeklyMoodSummary().then((res) => res && setSummary(res)).catch(console.error);
-                            showNotification("😊 Mood saved");
-                          } catch {
-                            showNotification("❌ Failed to save mood");
+                          } catch (err) {
+                            console.error("Add mood background error:", err);
                           }
                         }}
                       >
