@@ -538,17 +538,27 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   };
 
   const handleToggleTodo = async (id) => {
-    const res = await toggleTodo(id);
-    if (res?.success) {
-      await getTodos().then((r) => updateStateSafely(setTodos, r)).catch(console.error);
+    // 1. Instant Optimistic Local Toggle (0ms Latency)
+    setTodos((prev) =>
+      prev.map((t) => (t.id === id ? { ...t, completed: t.completed ? 0 : 1 } : t))
+    );
+    try {
+      // 2. Sync in Background
+      await toggleTodo(id);
+    } catch (err) {
+      console.error("Toggle todo background error:", err);
     }
   };
 
   const handleDeleteTodo = async (id) => {
-    const res = await deleteTodoApi(id);
-    if (res?.success) {
-      await getTodos().then((r) => updateStateSafely(setTodos, r)).catch(console.error);
-      showNotification("🗑️ Intention removed");
+    // 1. Instant Optimistic Local Delete (0ms Latency)
+    setTodos((prev) => prev.filter((t) => t.id !== id));
+    showNotification("🗑️ Intention removed");
+    try {
+      // 2. Sync in Background
+      await deleteTodoApi(id);
+    } catch (err) {
+      console.error("Delete todo background error:", err);
     }
   };
 

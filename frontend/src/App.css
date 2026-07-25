@@ -800,6 +800,90 @@ button {
 }
 
 /* =========================
+   DAILY INTENTIONS (TODO ITEM ROW)
+========================= */
+
+.todo-list-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.todo-item-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: 1px solid #EAE6DF;
+  border-radius: 12px;
+  transition: all 0.15s ease;
+}
+
+.todo-item-row:hover {
+  border-color: #4A7C59;
+  background: #F8FAF8;
+}
+
+.app.dark .todo-item-row {
+  background: #252825;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.todo-item-row.completed .todo-text-content {
+  text-decoration: line-through;
+  color: #9CA3AF;
+}
+
+.todo-label-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  flex: 1;
+}
+
+.todo-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #4A7C59;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.todo-text-content {
+  font-size: 14px;
+  color: #2D3732;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.app.dark .todo-text-content {
+  color: #E5E7EB;
+}
+
+.delete-btn {
+  background: transparent;
+  color: #9CA3AF;
+  border-radius: 8px;
+  padding: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.delete-btn:hover {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.app.dark .delete-btn:hover {
+  background: rgba(220, 38, 38, 0.2);
+  color: #EF4444;
+}
+
+/* =========================
    ENTRY LIST (HISTORY)
 ========================= */
 
