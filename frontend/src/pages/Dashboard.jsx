@@ -402,9 +402,12 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
       await createJournal({ entry_text: entry, entry_date: getLocalDateString() });
       setEntry("");
       showNotification("📝 Journal saved");
-      getJournals().then((res) => updateStateSafely(setJournals, res)).catch(console.error);
-      getMoods().then((res) => updateStateSafely(setMoods, res)).catch(console.error);
-      getWeeklyMoodSummary().then((res) => res && setSummary(res)).catch(console.error);
+      const freshJournals = await getJournals();
+      updateStateSafely(setJournals, freshJournals);
+      const freshMoods = await getMoods();
+      updateStateSafely(setMoods, freshMoods);
+      const freshSummary = await getWeeklyMoodSummary();
+      if (freshSummary) setSummary(freshSummary);
     } catch {
       showNotification("❌ Failed to save journal");
     }
@@ -416,7 +419,8 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
     try {
       await saveGratitude({ gratitude_1: v1 || null, gratitude_2: v2 || null, gratitude_3: v3 || null, entry_date: getLocalDateString() });
       setG1(""); setG2(""); setG3("");
-      getGratitudeHistory().then((res) => updateStateSafely(setGratitudeHistory, res)).catch(console.error);
+      const freshGrat = await getGratitudeHistory();
+      updateStateSafely(setGratitudeHistory, freshGrat);
       showNotification("🙏 Gratitude saved");
     } catch {
       showNotification("❌ Failed to save gratitude");
@@ -431,7 +435,8 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
       if (res?.success || res?.id || res?.message) {
         showNotification("✅ Task added");
         setNewTodoText("");
-        getTodos().then((r) => updateStateSafely(setTodos, r)).catch(console.error);
+        const freshTodos = await getTodos();
+        updateStateSafely(setTodos, freshTodos);
       } else {
         showNotification("❌ Failed to add task");
       }
@@ -444,7 +449,8 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   const handleToggleTodo = async (id) => {
     try {
       await toggleTodo(id);
-      getTodos().then((r) => updateStateSafely(setTodos, r)).catch(console.error);
+      const freshTodos = await getTodos();
+      updateStateSafely(setTodos, freshTodos);
     } catch {
       showNotification("Failed to update task");
     }
@@ -453,7 +459,8 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   const handleDeleteTodo = async (id) => {
     try {
       await deleteTodoApi(id);
-      getTodos().then((r) => updateStateSafely(setTodos, r)).catch(console.error);
+      const freshTodos = await getTodos();
+      updateStateSafely(setTodos, freshTodos);
       showNotification("🗑️ Task deleted");
     } catch {
       showNotification("Failed to delete task");
