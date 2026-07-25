@@ -538,7 +538,83 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
     const a = document.createElement("a");
     a.href = url; a.download = `mirrortalk-export-${getLocalDateString()}.csv`; a.click();
     URL.revokeObjectURL(url);
-    showNotification("📥 Data exported");
+    showNotification("📥 CSV Exported");
+  };
+
+  const exportPDF = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      showNotification("⚠️ Please allow popups to export PDF");
+      return;
+    }
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>MirrorTalk - Personal Reflection Report</title>
+        <style>
+          body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; color: #2D3732; line-height: 1.6; background: #fff; }
+          .header { text-align: center; border-bottom: 2px solid #4A7C59; padding-bottom: 16px; margin-bottom: 24px; }
+          .brand { font-size: 24px; font-weight: bold; color: #4A7C59; }
+          .sub { font-size: 13px; color: #78867D; margin-top: 4px; }
+          .section { margin-bottom: 24px; }
+          .section-title { font-size: 15px; font-weight: bold; color: #1E3524; border-bottom: 1px solid #EBE8E1; padding-bottom: 6px; margin-bottom: 12px; }
+          .entry { background: #FAFAF7; border: 1px solid #EBE8E1; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
+          .entry-date { font-size: 11px; font-weight: bold; color: #4A7C59; }
+          .entry-text { font-size: 13px; margin-top: 4px; white-space: pre-wrap; color: #2D3732; }
+          .tag { display: inline-block; background: #EEF4F0; color: #4A7C59; padding: 2px 8px; border-radius: 12px; font-size: 11px; margin-right: 4px; margin-bottom: 4px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="brand">🌿 MirrorTalk</div>
+          <div class="sub">Personal Reflection Report — Generated for ${profile.name || "User"} on ${todayStr}</div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">📓 Journal Entries (${journals.length})</div>
+          ${journals.map(j => `
+            <div class="entry">
+              <div class="entry-date">${parseLocalDate(j.entry_date).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}</div>
+              <div class="entry-text">${(j.entry_text || "").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+            </div>
+          `).join('') || '<p style="color:#78867D; font-size: 13px;">No journal entries recorded.</p>'}
+        </div>
+
+        <div class="section">
+          <div class="section-title">😊 Mood History (${moods.length})</div>
+          ${moods.map(m => `
+            <div style="margin-bottom:6px; font-size:13px;">
+              <strong>${parseLocalDate(m.mood_date).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}:</strong> 
+              ${moodMap[m.mood_level]} (${moodLabel[m.mood_level]})
+            </div>
+          `).join('') || '<p style="color:#78867D; font-size: 13px;">No mood logs recorded.</p>'}
+        </div>
+
+        <div class="section">
+          <div class="section-title">🙏 Gratitude Moments (${gratitudeHistory.length})</div>
+          ${gratitudeHistory.map(g => `
+            <div class="entry">
+              <div class="entry-date">${parseLocalDate(g.entry_date).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}</div>
+              <div style="margin-top:6px;">
+                ${[g.gratitude_1, g.gratitude_2, g.gratitude_3].filter(Boolean).map(item => `<span class="tag">${item.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</span>`).join('')}
+              </div>
+            </div>
+          `).join('') || '<p style="color:#78867D; font-size: 13px;">No gratitude entries recorded.</p>'}
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+            setTimeout(function() { window.close(); }, 500);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
+    showNotification("📄 PDF Report Ready");
   };
 
   const downloadSingleJournal = (journal) => {
@@ -549,7 +625,49 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
     const a = document.createElement("a");
     a.href = url; a.download = `journal-entry-${journal.entry_date}.txt`; a.click();
     URL.revokeObjectURL(url);
-    showNotification("📄 Entry downloaded");
+    showNotification("📄 Entry downloaded (.txt)");
+  };
+
+  const downloadSingleJournalPDF = (journal) => {
+    const formattedDate = parseLocalDate(journal.entry_date).toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      showNotification("⚠️ Please allow popups to save PDF");
+      return;
+    }
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Journal Entry - ${journal.entry_date}</title>
+        <style>
+          body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; color: #2D3732; line-height: 1.7; background: #fff; }
+          .card { border: 1px solid #EBE8E1; border-radius: 16px; padding: 32px; background: #FAFAF7; max-width: 600px; margin: 0 auto; }
+          .brand { font-size: 20px; font-weight: bold; color: #4A7C59; margin-bottom: 4px; }
+          .date { font-size: 12px; color: #78867D; margin-bottom: 20px; border-bottom: 1px solid #EBE8E1; padding-bottom: 12px; }
+          .content { font-size: 15px; white-space: pre-wrap; color: #111; }
+          .footer { margin-top: 24px; font-size: 11px; color: #9ca3af; text-align: center; }
+        </style>
+      </head>
+      <body>
+        <div class="card">
+          <div class="brand">🌿 MirrorTalk Reflection</div>
+          <div class="date">${formattedDate}</div>
+          <div class="content">${(journal.entry_text || "").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>
+          <div class="footer">Move at your own pace 🌱</div>
+        </div>
+        <script>
+          window.onload = function() {
+            window.print();
+            setTimeout(function() { window.close(); }, 500);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
+    showNotification("📄 Exporting PDF...");
   };
 
   const copySingleJournal = (text) => {
@@ -994,7 +1112,8 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                           onChange={(e) => setJournalSearch(e.target.value)}
                         />
                       </div>
-                      <button className="export-btn" onClick={exportData}>📥 Export</button>
+                      <button className="export-btn" onClick={exportData}>📥 Export CSV</button>
+                      <button className="export-btn" onClick={exportPDF} style={{ background: "#EEF4F0", color: "#4A7C59", border: "1px solid rgba(74,124,89,0.2)" }}>📄 Export PDF</button>
                     </div>
                   </div>
 
@@ -1028,6 +1147,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                               <div className="entry-action-pills">
                                 <button type="button" className="entry-pill-btn" onClick={() => copySingleJournal(j.entry_text)}>📋 Copy</button>
                                 <button type="button" className="entry-pill-btn entry-pill-save" onClick={() => downloadSingleJournal(j)}>📄 Save .txt</button>
+                                <button type="button" className="entry-pill-btn entry-pill-save" onClick={() => downloadSingleJournalPDF(j)}>📄 Save .pdf</button>
                               </div>
                             </div>
                           </div>
