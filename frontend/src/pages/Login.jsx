@@ -15,13 +15,15 @@ function Login({ setToken, onForgotPassword }) {
     setLoading(true);
     setError("");
 
-    const res = await loginUser({ email, password });
+    const cleanEmail = email.trim().toLowerCase();
+    const res = await loginUser({ email: cleanEmail, password });
+    const token = res?.data?.token || res?.token;
 
-    if (res?.success) {
-      localStorage.setItem("token", res.data.token);
-      setToken(res.data.token);
+    if ((res?.success || token) && token) {
+      localStorage.setItem("token", token);
+      setToken(token);
     } else {
-      setError("Invalid email or password. Please try again.");
+      setError(res?.message || res?.error || "Invalid email or password. Please try again.");
     }
 
     setLoading(false);

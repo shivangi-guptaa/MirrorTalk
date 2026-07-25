@@ -15,17 +15,19 @@ function Register({ onSwitchToLogin, onLogin }) {
 
   const handleExistingUserAutoLogin = async () => {
     try {
-      const loginRes = await loginUser({ email, password });
-      if (loginRes?.success && loginRes?.data?.token) {
-        localStorage.setItem("token", loginRes.data.token);
+      const cleanEmail = email.trim().toLowerCase();
+      const loginRes = await loginUser({ email: cleanEmail, password });
+      const token = loginRes?.data?.token || loginRes?.token;
+      if ((loginRes?.success || token) && token) {
+        localStorage.setItem("token", token);
         setSuccess("You're already registered! Logging you in... 🌿");
         setTimeout(() => {
-          if (onLogin) onLogin(loginRes.data.token);
-        }, 800);
+          if (onLogin) onLogin(token);
+        }, 600);
         return true;
       }
     } catch (err) {
-      console.error(err);
+      console.error("Auto login error:", err);
     }
     setError("Account already exists, but password was incorrect.");
     setTimeout(() => onSwitchToLogin(), 1800);
@@ -38,8 +40,10 @@ function Register({ onSwitchToLogin, onLogin }) {
     setError("");
     setSuccess("");
 
+    const cleanEmail = email.trim().toLowerCase();
+
     // ✅ Client-side validation
-    if (!email.trim()) {
+    if (!cleanEmail) {
       setError("Please enter your email address.");
       return;
     }
@@ -50,25 +54,28 @@ function Register({ onSwitchToLogin, onLogin }) {
 
     setLoading(true);
     try {
-      const res = await registerUser({ email, password });
+      const res = await registerUser({ email: cleanEmail, password });
+      const token = res?.data?.token || res?.token;
 
-      if (res?.success && res?.data?.token) {
+      if ((res?.success || token) && token) {
         // ✅ New account created — auto-login directly
-        localStorage.setItem("token", res.data.token);
+        localStorage.setItem("token", token);
         setSuccess("Account created! Taking you in... 🌱");
         setTimeout(() => {
-          if (onLogin) onLogin(res.data.token);
-        }, 800);
+          if (onLogin) onLogin(token);
+        }, 600);
         return;
       }
 
-      if (res?.message?.toLowerCase().includes("already exists")) {
+      const msg = (res?.message || res?.error || "").toLowerCase();
+      if (msg.includes("already exists")) {
         await handleExistingUserAutoLogin();
         return;
       }
 
-      setError(res?.message || "Registration failed");
+      setError(res?.message || res?.error || "Registration failed. Please try again.");
     } catch (err) {
+      console.error("Registration submit error:", err);
       const message = err?.response?.data?.message || err?.message || "";
       if (message.toLowerCase().includes("already exists")) {
         await handleExistingUserAutoLogin();

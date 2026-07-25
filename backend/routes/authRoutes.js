@@ -10,7 +10,7 @@ const router = express.Router();
    SIGNUP
 ====================== */
 router.post("/signup", async (req, res) => {
-  const { name, email, password } = req.body;
+  let { name, email, password } = req.body;
 
   if (!email || !password || password.length < 6) {
     return res.status(400).json({
@@ -19,12 +19,13 @@ router.post("/signup", async (req, res) => {
     });
   }
 
-  const userName = name?.trim() || email.split("@")[0] || "User";
+  const cleanEmail = email.trim().toLowerCase();
+  const userName = name?.trim() || cleanEmail.split("@")[0] || "User";
 
   try {
     const [existingUser] = await db
       .promise()
-      .query("SELECT id FROM users WHERE email = ?", [email]);
+      .query("SELECT id FROM users WHERE email = ?", [cleanEmail]);
 
     if (existingUser.length > 0) {
       return res.status(400).json({
@@ -40,7 +41,7 @@ router.post("/signup", async (req, res) => {
       .promise()
       .query(
         "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
-        [userName, email, passwordHash]
+        [userName, cleanEmail, passwordHash]
       );
 
     const jwtSecret = process.env.JWT_SECRET || "mirrortalk_fallback_jwt_secret_2026";
@@ -55,11 +56,12 @@ router.post("/signup", async (req, res) => {
       message: "User registered successfully",
       data: {
         token,
-        user: { id: result.insertId, name, email },
+        user: { id: result.insertId, name: userName, email: cleanEmail },
       },
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Signup endpoint error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
@@ -67,12 +69,21 @@ router.post("/signup", async (req, res) => {
    LOGIN
 ====================== */
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  let { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({
+      success: false,
+      message: "Email and password are required.",
+    });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
 
   try {
     const [users] = await db
       .promise()
-      .query("SELECT * FROM users WHERE email = ?", [email]);
+      .query("SELECT * FROM users WHERE email = ?", [cleanEmail]);
 
     if (users.length === 0) {
       return res.status(400).json({
@@ -111,7 +122,8 @@ router.post("/login", async (req, res) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("Login endpoint error:", err);
+    res.status(500).json({ success: false, message: err.message });
   }
 });
 
