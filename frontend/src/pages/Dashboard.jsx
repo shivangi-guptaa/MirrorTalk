@@ -368,18 +368,18 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   };
 
   const refreshAllData = useCallback(() => {
-    return Promise.all([
-      getMoods().then((res) => setMoods(handleApiResponse(res))),
-      getWeeklyMoodSummary().then(setSummary),
-      getGratitudeHistory().then((res) => setGratitudeHistory(handleApiResponse(res))),
-      getJournals().then((res) => setJournals(handleApiResponse(res))),
-      getTodos().then((res) => setTodos(handleApiResponse(res))),
+    return Promise.allSettled([
+      getMoods().then((res) => setMoods(handleApiResponse(res))).catch(console.error),
+      getWeeklyMoodSummary().then(setSummary).catch(console.error),
+      getGratitudeHistory().then((res) => setGratitudeHistory(handleApiResponse(res))).catch(console.error),
+      getJournals().then((res) => setJournals(handleApiResponse(res))).catch(console.error),
+      getTodos().then((res) => setTodos(handleApiResponse(res))).catch(console.error),
     ]);
   }, [handleApiResponse]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    refreshAllData().catch(console.error).finally(() => setLoading(false));
+    refreshAllData().finally(() => setLoading(false));
   }, [refreshAllData]);
 
   const saveJournal = async (e) => {
@@ -388,15 +388,10 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
     try {
       await createJournal({ entry_text: entry, entry_date: getLocalDateString() });
       setEntry("");
-      const [journalsRes, moodsRes, summaryRes] = await Promise.all([
-        getJournals(),
-        getMoods(),
-        getWeeklyMoodSummary(),
-      ]);
-      setJournals(handleApiResponse(journalsRes));
-      setMoods(handleApiResponse(moodsRes));
-      setSummary(summaryRes);
       showNotification("📝 Journal saved");
+      getJournals().then((res) => setJournals(handleApiResponse(res))).catch(console.error);
+      getMoods().then((res) => setMoods(handleApiResponse(res))).catch(console.error);
+      getWeeklyMoodSummary().then(setSummary).catch(console.error);
     } catch {
       showNotification("❌ Failed to save journal");
     }
@@ -420,20 +415,24 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
     if (!newTodoText.trim()) return;
     try {
       const res = await createTodo({ task_text: newTodoText.trim(), task_date: getLocalDateString() });
-      if (res.success) {
+      if (res?.success || res?.id || res?.message) {
         showNotification("✅ Task added");
         setNewTodoText("");
-        getTodos().then((r) => setTodos(handleApiResponse(r)));
+        const freshTodos = await getTodos();
+        setTodos(handleApiResponse(freshTodos));
+      } else {
+        showNotification("❌ Failed to add task");
       }
-    } catch {
-      showNotification("Failed to add task");
+    } catch (err) {
+      console.error(err);
+      showNotification("❌ Failed to add task");
     }
   };
 
   const handleToggleTodo = async (id) => {
     try {
       await toggleTodo(id);
-      getTodos().then((r) => setTodos(handleApiResponse(r)));
+      getTodos().then((r) => setTodos(handleApiResponse(r))).catch(console.error);
     } catch {
       showNotification("Failed to update task");
     }
@@ -442,7 +441,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   const handleDeleteTodo = async (id) => {
     try {
       await deleteTodoApi(id);
-      getTodos().then((r) => setTodos(handleApiResponse(r)));
+      getTodos().then((r) => setTodos(handleApiResponse(r))).catch(console.error);
       showNotification("🗑️ Task deleted");
     } catch {
       showNotification("Failed to delete task");
@@ -450,7 +449,11 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   };
 
   const todayDateStr = getLocalDateString();
-  const todayTasks = todos.filter((t) => t.task_date && t.task_date.split("T")[0] === todayDateStr);
+  const todayTasks = todos.filter((t) => {
+    if (!t.task_date) return true;
+    const taskDate = t.task_date.split("T")[0];
+    return taskDate === todayDateStr || !t.completed;
+  });
   const todayCompletedTasks = todayTasks.filter((t) => t.completed);
 
   // Review Day — date picker state (defaults to today)
