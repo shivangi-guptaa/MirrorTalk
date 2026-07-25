@@ -6,6 +6,52 @@ const admin = require("../config/firebaseAdmin");
 
 const router = express.Router();
 
+const insertUserHelper = async (name, email, passwordHash) => {
+  try {
+    const [columns] = await db.promise().query("SHOW COLUMNS FROM users");
+    const colNames = columns.map((c) => c.Field);
+
+    const fields = [];
+    const values = [];
+
+    if (colNames.includes("name")) {
+      fields.push("name");
+      values.push(name);
+    }
+    if (colNames.includes("email")) {
+      fields.push("email");
+      values.push(email);
+    }
+    if (colNames.includes("password_hash")) {
+      fields.push("password_hash");
+      values.push(passwordHash);
+    }
+    if (colNames.includes("password")) {
+      fields.push("password");
+      values.push(passwordHash);
+    }
+
+    if (!fields.length) {
+      throw new Error("No fields matched in users table");
+    }
+
+    const placeholders = fields.map(() => "?").join(", ");
+    const sql = `INSERT INTO users (${fields.join(", ")}) VALUES (${placeholders})`;
+
+    const [result] = await db.promise().query(sql, values);
+    return result.insertId;
+  } catch (err) {
+    console.error("insertUserHelper fallback note:", err.message);
+    const [result] = await db
+      .promise()
+      .query(
+        "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
+        [name, email, passwordHash]
+      );
+    return result.insertId;
+  }
+};
+
 /* ======================
    SIGNUP
 ====================== */
@@ -37,16 +83,11 @@ router.post("/signup", async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    const [result] = await db
-      .promise()
-      .query(
-        "INSERT INTO users (name, email, password_hash) VALUES (?, ?, ?)",
-        [userName, cleanEmail, passwordHash]
-      );
+    const newUserId = await insertUserHelper(userName, cleanEmail, passwordHash);
 
     const jwtSecret = process.env.JWT_SECRET || "mirrortalk_fallback_jwt_secret_2026";
     const token = jwt.sign(
-      { id: result.insertId },
+      { id: newUserId },
       jwtSecret,
       { expiresIn: "1d" }
     );
@@ -56,7 +97,7 @@ router.post("/signup", async (req, res) => {
       message: "User registered successfully",
       data: {
         token,
-        user: { id: result.insertId, name: userName, email: cleanEmail },
+        user: { id: newUserId, name: userName, email: cleanEmail },
       },
     });
   } catch (err) {
@@ -93,8 +134,16 @@ router.post("/login", async (req, res) => {
     }
 
     const user = users[0];
+    const storedHash = user.password_hash || user.password;
 
-    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!storedHash) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, storedHash);
     if (!isMatch) {
       return res.status(400).json({
         success: false,

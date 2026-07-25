@@ -36,6 +36,18 @@ const initDatabaseSchema = async () => {
       );
     `);
 
+    // ✅ Migration safeguards: Ensure password_hash and password columns exist / allow NULL if needed
+    try {
+      await promiseDb.query("ALTER TABLE users ADD COLUMN password_hash VARCHAR(255) NULL;");
+    } catch (e) {
+      // Column password_hash already exists
+    }
+    try {
+      await promiseDb.query("ALTER TABLE users ADD COLUMN password VARCHAR(255) NULL;");
+    } catch (e) {
+      // Column password already exists
+    }
+
     await promiseDb.query(`
       CREATE TABLE IF NOT EXISTS journals (
         id INT AUTO_INCREMENT PRIMARY KEY,
