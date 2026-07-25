@@ -506,6 +506,105 @@
   border-color: rgba(255, 255, 255, 0.07);
 }
 
+/* =========================
+   SMART PERSONAL INSIGHTS CARD (GLOBAL)
+========================= */
+
+.insights-highlight-card {
+  background: #F6F8F5;
+  border: 1px solid #E1E6E0;
+  box-shadow: 0 4px 20px rgba(74, 124, 89, 0.04);
+}
+
+.app.dark .insights-highlight-card {
+  background: #1e221f;
+  border-color: rgba(134, 200, 83, 0.15);
+}
+
+.insights-list-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.insight-item-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #ffffff;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid #EAE7DF;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.insight-item-box:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
+}
+
+.app.dark .insight-item-box {
+  background: #252825;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.insight-item-box.wide {
+  grid-column: span 2;
+  background: #EEF4F0;
+  border-color: rgba(74, 124, 89, 0.25);
+}
+
+.app.dark .insight-item-box.wide {
+  background: #1a2c1f;
+  border-color: rgba(134, 200, 83, 0.25);
+}
+
+.insight-item-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #F3F6F3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app.dark .insight-item-icon {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.insight-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.insight-item-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #78867D;
+}
+
+.app.dark .insight-item-title {
+  color: #a3b1a7;
+}
+
+.insight-item-val {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #2D3732;
+  line-height: 1.35;
+}
+
+.app.dark .insight-item-val {
+  color: #f0f0f0;
+}
+
 .journal-date-label {
   font-size: 12.5px;
   color: #9ca3af;
@@ -2776,115 +2875,6 @@ button {
   .mood-emoji-big {
     font-size: 20px;
   }
-
-/* =========================
-   SMART PERSONAL INSIGHTS CARD
-========================= */
-
-.insights-highlight-card {
-  background: #F6F8F5;
-  border: 1px solid #E1E6E0;
-  box-shadow: 0 4px 20px rgba(74, 124, 89, 0.04);
-}
-
-.app.dark .insights-highlight-card {
-  background: #1e221f;
-  border-color: rgba(134, 200, 83, 0.15);
-}
-
-.insights-list-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
-  margin-top: 14px;
-}
-
-.insight-item-box {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: #ffffff;
-  padding: 14px 16px;
-  border-radius: 14px;
-  border: 1px solid #EAE7DF;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.insight-item-box:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.03);
-}
-
-.app.dark .insight-item-box {
-  background: #252825;
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.insight-item-box.wide {
-  grid-column: span 2;
-  background: #EEF4F0;
-  border-color: rgba(74, 124, 89, 0.25);
-}
-
-.app.dark .insight-item-box.wide {
-  background: #1a2c1f;
-  border-color: rgba(134, 200, 83, 0.25);
-}
-
-.insight-item-icon {
-  font-size: 22px;
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: #F3F6F3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.app.dark .insight-item-icon {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.insight-item-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.insight-item-title {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #78867D;
-}
-
-.app.dark .insight-item-title {
-  color: #a3b1a7;
-}
-
-.insight-item-val {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #2D3732;
-  line-height: 1.35;
-}
-
-.app.dark .insight-item-val {
-  color: #f0f0f0;
-}
-
-@media (max-width: 640px) {
-  .insights-list-grid {
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  .insight-item-box.wide {
-    grid-column: span 1;
-  }
-}
 
   /* 2. PROMPT INPUT MOBILE (Prevent iOS auto-zoom) */
   .journal-textarea {
