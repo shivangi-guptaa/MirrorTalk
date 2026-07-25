@@ -35,7 +35,7 @@ router.post("/", authMiddleware, async (req, res) => {
   try {
     await db.promise().query(
       `
-      INSERT INTO gratitude_entries
+      INSERT INTO gratitude
         (user_id, gratitude_1, gratitude_2, gratitude_3, entry_date)
       VALUES (?, ?, ?, ?, ?)
       ON DUPLICATE KEY UPDATE
@@ -71,7 +71,7 @@ router.get("/", authMiddleware, async (req, res) => {
     const [rows] = await db.promise().query(
       `
       SELECT id, gratitude_1, gratitude_2, gratitude_3, entry_date
-      FROM gratitude_entries
+      FROM gratitude
       WHERE user_id = ?
       ORDER BY entry_date DESC
       `,
@@ -98,7 +98,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 
   try {
     const [result] = await db.promise().query(
-      "DELETE FROM gratitude_entries WHERE id = ? AND user_id = ?",
+      "DELETE FROM gratitude WHERE id = ? AND user_id = ?",
       [entryId, userId]
     );
 

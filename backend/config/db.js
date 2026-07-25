@@ -69,6 +69,20 @@ const initDatabaseSchema = async () => {
     `);
 
     await promiseDb.query(`
+      CREATE TABLE IF NOT EXISTS gratitude_entries (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        gratitude_1 TEXT,
+        gratitude_2 TEXT,
+        gratitude_3 TEXT,
+        entry_date DATE NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_user_id (user_id)
+      );
+    `);
+
+    await promiseDb.query(`
       CREATE TABLE IF NOT EXISTS todos (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,
