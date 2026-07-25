@@ -345,7 +345,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
     return new Date(parts[0], parts[1] - 1, parts[2]);
   };
 
-  const handleApiResponse = useCallback((res) => {
+  const safeExtractArray = useCallback((res) => {
     const isAuthError =
       res?.message === "Token is not valid" ||
       res?.message === "No token, authorization denied" ||
@@ -355,12 +355,25 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
       localStorage.removeItem("token");
       setToken(null);
       navigate("/auth");
-      return [];
+      return null;
     }
     if (Array.isArray(res)) return res;
-    if (res?.success && Array.isArray(res.data)) return res.data;
-    return [];
+    if (Array.isArray(res?.data)) return res.data;
+    if (Array.isArray(res?.journals)) return res.journals;
+    if (Array.isArray(res?.moods)) return res.moods;
+    if (Array.isArray(res?.gratitude)) return res.gratitude;
+    if (Array.isArray(res?.todos)) return res.todos;
+    return null;
   }, [navigate, setToken]);
+
+  const updateStateSafely = useCallback((setter, res) => {
+    const extracted = safeExtractArray(res);
+    if (extracted !== null) {
+      setter(extracted);
+    } else {
+      console.warn("RETAINING EXISTING STATE — API returned non-array or error response:", res);
+    }
+  }, [safeExtractArray]);
 
   const showNotification = (message) => {
     setNotification(message);
@@ -369,13 +382,13 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
 
   const refreshAllData = useCallback(() => {
     return Promise.allSettled([
-      getMoods().then((res) => setMoods(handleApiResponse(res))).catch(console.error),
-      getWeeklyMoodSummary().then(setSummary).catch(console.error),
-      getGratitudeHistory().then((res) => setGratitudeHistory(handleApiResponse(res))).catch(console.error),
-      getJournals().then((res) => setJournals(handleApiResponse(res))).catch(console.error),
-      getTodos().then((res) => setTodos(handleApiResponse(res))).catch(console.error),
+      getMoods().then((res) => updateStateSafely(setMoods, res)).catch(console.error),
+      getWeeklyMoodSummary().then((res) => res && setSummary(res)).catch(console.error),
+      getGratitudeHistory().then((res) => updateStateSafely(setGratitudeHistory, res)).catch(console.error),
+      getJournals().then((res) => updateStateSafely(setJournals, res)).catch(console.error),
+      getTodos().then((res) => updateStateSafely(setTodos, res)).catch(console.error),
     ]);
-  }, [handleApiResponse]);
+  }, [updateStateSafely]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -389,9 +402,9 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
       await createJournal({ entry_text: entry, entry_date: getLocalDateString() });
       setEntry("");
       showNotification("📝 Journal saved");
-      getJournals().then((res) => setJournals(handleApiResponse(res))).catch(console.error);
-      getMoods().then((res) => setMoods(handleApiResponse(res))).catch(console.error);
-      getWeeklyMoodSummary().then(setSummary).catch(console.error);
+      getJournals().then((res) => updateStateSafely(setJournals, res)).catch(console.error);
+      getMoods().then((res) => updateStateSafely(setMoods, res)).catch(console.error);
+      getWeeklyMoodSummary().then((res) => res && setSummary(res)).catch(console.error);
     } catch {
       showNotification("❌ Failed to save journal");
     }
@@ -403,7 +416,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
     try {
       await saveGratitude({ gratitude_1: v1 || null, gratitude_2: v2 || null, gratitude_3: v3 || null, entry_date: getLocalDateString() });
       setG1(""); setG2(""); setG3("");
-      setGratitudeHistory(handleApiResponse(await getGratitudeHistory()));
+      getGratitudeHistory().then((res) => updateStateSafely(setGratitudeHistory, res)).catch(console.error);
       showNotification("🙏 Gratitude saved");
     } catch {
       showNotification("❌ Failed to save gratitude");
@@ -418,8 +431,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
       if (res?.success || res?.id || res?.message) {
         showNotification("✅ Task added");
         setNewTodoText("");
-        const freshTodos = await getTodos();
-        setTodos(handleApiResponse(freshTodos));
+        getTodos().then((r) => updateStateSafely(setTodos, r)).catch(console.error);
       } else {
         showNotification("❌ Failed to add task");
       }
@@ -432,7 +444,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   const handleToggleTodo = async (id) => {
     try {
       await toggleTodo(id);
-      getTodos().then((r) => setTodos(handleApiResponse(r))).catch(console.error);
+      getTodos().then((r) => updateStateSafely(setTodos, r)).catch(console.error);
     } catch {
       showNotification("Failed to update task");
     }
@@ -441,7 +453,7 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
   const handleDeleteTodo = async (id) => {
     try {
       await deleteTodoApi(id);
-      getTodos().then((r) => setTodos(handleApiResponse(r))).catch(console.error);
+      getTodos().then((r) => updateStateSafely(setTodos, r)).catch(console.error);
       showNotification("🗑️ Task deleted");
     } catch {
       showNotification("Failed to delete task");
@@ -473,17 +485,17 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
     try {
       if (type === "journal") {
         await deleteJournal(id);
-        setJournals(handleApiResponse(await getJournals()));
-        setSummary(await getWeeklyMoodSummary());
+        getJournals().then((res) => updateStateSafely(setJournals, res)).catch(console.error);
+        getWeeklyMoodSummary().then((res) => res && setSummary(res)).catch(console.error);
         showNotification("🗑️ Journal deleted");
       } else if (type === "mood") {
         await deleteMood(id);
-        setMoods(handleApiResponse(await getMoods()));
-        setSummary(await getWeeklyMoodSummary());
+        getMoods().then((res) => updateStateSafely(setMoods, res)).catch(console.error);
+        getWeeklyMoodSummary().then((res) => res && setSummary(res)).catch(console.error);
         showNotification("🗑️ Mood entry deleted");
       } else if (type === "gratitude") {
         await deleteGratitude(id);
-        setGratitudeHistory(handleApiResponse(await getGratitudeHistory()));
+        getGratitudeHistory().then((res) => updateStateSafely(setGratitudeHistory, res)).catch(console.error);
         showNotification("🗑️ Gratitude deleted");
       }
     } catch {
@@ -934,9 +946,8 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
                           setMood(m);
                           try {
                             await addMood({ mood_level: m, mood_date: getLocalDateString() });
-                            const [moodsRes, summaryRes] = await Promise.all([getMoods(), getWeeklyMoodSummary()]);
-                            setMoods(handleApiResponse(moodsRes));
-                            setSummary(summaryRes);
+                            getMoods().then((res) => updateStateSafely(setMoods, res)).catch(console.error);
+                            getWeeklyMoodSummary().then((res) => res && setSummary(res)).catch(console.error);
                             showNotification("😊 Mood saved");
                           } catch {
                             showNotification("❌ Failed to save mood");
