@@ -7,16 +7,22 @@ const dbConfig = {
   password: process.env.DB_PASSWORD || "",
   database: process.env.DB_NAME || "MirrorTalk",
   dateStrings: true,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+  enableKeepAlive: true,
+  keepAliveInitialDelay: 10000,
 };
 
 if (process.env.NODE_ENV === "production" || process.env.DB_SSL === "true") {
   dbConfig.ssl = { rejectUnauthorized: false };
 }
 
-const db = mysql.createConnection(dbConfig);
+// ✅ Use Pool instead of single connection to prevent closed connection errors
+const pool = mysql.createPool(dbConfig);
 
 const initDatabaseSchema = async () => {
-  const promiseDb = db.promise();
+  const promiseDb = pool.promise();
   try {
     await promiseDb.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -101,13 +107,14 @@ const initDatabaseSchema = async () => {
   }
 };
 
-db.connect((err) => {
+pool.getConnection((err, connection) => {
   if (err) {
-    console.error("❌ DB connection failed:", err.message);
+    console.error("❌ DB Pool Connection failed:", err.message);
   } else {
-    console.log("✅ MySQL Connected");
+    console.log("✅ MySQL Connected via Pool");
+    connection.release();
     initDatabaseSchema();
   }
 });
 
-module.exports = db;
+module.exports = pool;
