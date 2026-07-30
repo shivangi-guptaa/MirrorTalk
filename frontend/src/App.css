@@ -507,6 +507,113 @@
 }
 
 /* =========================
+   TODAY'S REFLECTION BANNER
+========================= */
+
+.today-reflection-card {
+  background: linear-gradient(135deg, #FAFBF9 0%, #F3F6F3 100%);
+  border: 1px solid #E2E8E2;
+  box-shadow: 0 4px 20px rgba(74, 124, 89, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 24px 28px;
+  border-radius: 20px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.app.dark .today-reflection-card {
+  background: linear-gradient(135deg, #1e231f 0%, #161917 100%);
+  border-color: rgba(134, 200, 83, 0.15);
+}
+
+.today-reflection-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.today-reflection-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #4A7C59;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.app.dark .today-reflection-badge {
+  color: #86c853;
+}
+
+.today-reflection-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #2D3732;
+  margin: 2px 0 0 0;
+  letter-spacing: -0.3px;
+  font-family: "Poppins", sans-serif;
+}
+
+.app.dark .today-reflection-title {
+  color: #f0f0f0;
+}
+
+.today-reflection-subtitle {
+  font-size: 14.5px;
+  color: #6B7C70;
+  margin: 0;
+  font-weight: 400;
+}
+
+.app.dark .today-reflection-subtitle {
+  color: #a0b0a5;
+}
+
+.today-reflection-art {
+  width: 110px;
+  height: 110px;
+  flex-shrink: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  border: 2px solid #ffffff;
+}
+
+.app.dark .today-reflection-art {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.today-reflection-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (max-width: 640px) {
+  .today-reflection-card {
+    padding: 18px 20px;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+  .today-reflection-title {
+    font-size: 18px;
+  }
+  .today-reflection-subtitle {
+    font-size: 13px;
+  }
+  .today-reflection-art {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* =========================
    SMART PERSONAL INSIGHTS CARD (GLOBAL)
 ========================= */
 

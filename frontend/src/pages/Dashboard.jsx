@@ -1112,6 +1112,32 @@ function Dashboard({ token, setToken, toggleTheme, darkMode }) {
             {/* TODAY TAB */}
             {activeTab === "today" && (
               <div className="tab-content" key="today">
+                {/* Today's Reflection Banner */}
+                <div className="dash-card today-reflection-card">
+                  <div className="today-reflection-content">
+                    <div className="today-reflection-badge">
+                      <Sparkles size={14} color="#4A7C59" /> Today's reflection
+                    </div>
+                    <h2 className="today-reflection-title">
+                      {journals.filter((j) => normalizeDateStr(j.entry_date || j.created_at) === todayDateStr).length === 0
+                        ? "You've written 0 entries."
+                        : `You've written ${journals.filter((j) => normalizeDateStr(j.entry_date || j.created_at) === todayDateStr).length} entry${journals.filter((j) => normalizeDateStr(j.entry_date || j.created_at) === todayDateStr).length === 1 ? "" : "s"}.`}
+                    </h2>
+                    <p className="today-reflection-subtitle">
+                      {journals.filter((j) => normalizeDateStr(j.entry_date || j.created_at) === todayDateStr).length === 0
+                        ? "Start with one thought."
+                        : "Keep reflecting at your own gentle pace."}
+                    </p>
+                  </div>
+                  <div className="today-reflection-art">
+                    <img
+                      src="/journal_empty_illustration.jpg"
+                      alt="Serene journal reflection"
+                      className="today-reflection-img"
+                    />
+                  </div>
+                </div>
+
                 {/* Journal Card */}
                 <div className="dash-card journal-card">
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
