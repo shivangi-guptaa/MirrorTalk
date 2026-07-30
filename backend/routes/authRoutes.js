@@ -172,17 +172,41 @@ router.post("/login", async (req, res) => {
   }
 
   const cleanEmail = email.trim().toLowerCase();
+  const jwtSecret = process.env.JWT_SECRET || "mirrortalk_fallback_jwt_secret_2026";
 
   try {
     const [users] = await db
       .promise()
       .query("SELECT * FROM users WHERE email = ?", [cleanEmail]);
 
-    if (users.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid credentials",
-      });
+    if (!users || users.length === 0) {
+      // Auto-register user if logging in with a new email
+      try {
+        const userName = cleanEmail.split("@")[0] || "User";
+        const salt = await bcrypt.genSalt(10);
+        const passwordHash = await bcrypt.hash(password, salt);
+        const newUserId = await insertUserHelper(userName, cleanEmail, passwordHash);
+
+        const token = jwt.sign(
+          { id: newUserId, email: cleanEmail },
+          jwtSecret,
+          { expiresIn: "1d" }
+        );
+
+        return res.json({
+          success: true,
+          message: "Account created and logged in! 🌱",
+          data: {
+            token,
+            user: { id: newUserId, name: userName, email: cleanEmail },
+          },
+        });
+      } catch (autoRegErr) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid email or password",
+        });
+      }
     }
 
     const user = users[0];
@@ -195,36 +219,49 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    const isMatch = await bcrypt.compare(password, storedHash);
+    let isMatch = false;
+    try {
+      if (storedHash === "GOOGLE_AUTH") {
+        isMatch = false;
+      } else {
+        isMatch = await bcrypt.compare(password, storedHash);
+      }
+    } catch (bcryptErr) {
+      console.error("Bcrypt compare note:", bcryptErr.message);
+      isMatch = false;
+    }
+
     if (!isMatch) {
       return res.status(400).json({
         success: false,
-        message: "Invalid credentials",
+        message: "Invalid email or password",
       });
     }
 
-    const jwtSecret = process.env.JWT_SECRET || "mirrortalk_fallback_jwt_secret_2026";
     const token = jwt.sign(
-      { id: user.id },
+      { id: user.id, email: user.email },
       jwtSecret,
       { expiresIn: "1d" }
     );
 
-    res.json({
+    return res.json({
       success: true,
       message: "Login successful",
       data: {
         token,
         user: {
           id: user.id,
-          name: user.name,
+          name: user.name || cleanEmail.split("@")[0],
           email: user.email,
         },
       },
     });
   } catch (err) {
-    console.error("Login endpoint error:", err);
-    res.status(500).json({ success: false, message: err.message });
+    console.error("Login endpoint note:", err);
+    return res.status(400).json({
+      success: false,
+      message: err.message || "Invalid credentials",
+    });
   }
 });
 
