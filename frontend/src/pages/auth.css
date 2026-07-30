@@ -385,10 +385,11 @@
   border: none;
   cursor: pointer;
   font-family: "Inter", sans-serif;
-  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  transition: all 150ms cubic-bezier(0.4, 0, 0.2, 1);
   margin-top: 2px;
   position: relative;
   overflow: hidden;
+  box-shadow: 0 4px 14px rgba(59, 109, 17, 0.2);
 }
 
 .auth-form-body button.primary::after {
@@ -408,12 +409,13 @@
 
 .auth-form-body button.primary:hover {
   background: #2f5a0d;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(59, 109, 17, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(59, 109, 17, 0.32);
 }
 
 .auth-form-body button.primary:active {
   transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(59, 109, 17, 0.2);
 }
 
 .auth-form-body button.primary:disabled {
